@@ -1,0 +1,56 @@
+# Render.com Blueprint
+# Deploy with: Connect GitHub repo to Render, it auto-detects this file
+
+services:
+  # Node.js Backend (Position Manager)
+  - type: web
+    name: yieldsense-backend
+    runtime: node
+    region: oregon
+    plan: free
+    branch: main
+    rootDir: whirlpool-dashboard/server
+    buildCommand: npm install && npm run build
+    startCommand: node dist/index.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3001
+      - key: RPC_URL
+        sync: false  # Set manually in Render dashboard (secret)
+    healthCheckPath: /health
+
+  # Python ML API
+  - type: web
+    name: yieldsense-ml-api
+    runtime: python
+    region: oregon
+    plan: free
+    branch: main
+    rootDir: whirlpool-dashboard/ml-api
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PORT
+        value: 8000
+    healthCheckPath: /health
+
+  # Trading API (Jupiter Swap)
+  - type: web
+    name: yieldsense-trading-api
+    runtime: node
+    region: oregon
+    plan: free
+    branch: main
+    rootDir: whirlpool-dashboard/trading-api
+    buildCommand: npm install && npm run build
+    startCommand: node dist/index.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3002
+      - key: RPC_URL
+        sync: false
+

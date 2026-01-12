@@ -15,11 +15,17 @@ warnings.filterwarnings('ignore')
 def fetch_crypto_news(token_symbol):
     """
     Fetch news from CryptoPanic API (FREE TIER SAFE).
+    Uses multiple API keys with fallback.
     """
     print(f"\nFetching news for {token_symbol} from CryptoPanic...")
 
-    # Using the provided User Key
-    API_KEY = "5dfe8871ec3666b5742143616833cb12f4fb682e"
+    # Multiple API keys with fallback
+    API_KEYS = [
+        "131c0462cd783cf26c1d9f78ed2da42f4e3d6130",
+        "b1df468cd291aba73669559ba56e8f71eb74eb36",
+        "62104f2088449001e9f291914c754be8e6971dfc",
+        "28d8727e72fc53245dd1996fab56fe326bf40ccf"
+    ]
     
     # Map symbols to full names if needed (CryptoPanic often prefers full names or specific IDs)
     currency_map = {
@@ -31,6 +37,9 @@ def fetch_crypto_news(token_symbol):
     
     query_currency = currency_map.get(token_symbol.lower(), token_symbol.lower())
 
+    # Use first working key
+    API_KEY = API_KEYS[0]
+    
     urls_to_test = [
         # 1. SOL Ticker - RISING Filter - Expecting Fresh?
         (

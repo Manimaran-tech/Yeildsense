@@ -37,7 +37,14 @@ TOKEN_ADDRESSES = {
     'pengu': '2zMMhcVQEXDtdE6vsFS7S7D5oUodfJHE8vd1gnBouauv'
 }
 
-CRYPTOPANIC_API_KEY = "5dfe8871ec3666b5742143616833cb12f4fb682e"
+CRYPTOPANIC_API_KEYS = [
+    "131c0462cd783cf26c1d9f78ed2da42f4e3d6130",
+    "b1df468cd291aba73669559ba56e8f71eb74eb36",
+    "62104f2088449001e9f291914c754be8e6971dfc",
+    "28d8727e72fc53245dd1996fab56fe326bf40ccf"
+]
+CRYPTOPANIC_KEY_INDEX = 0  # Current key index, rotates on failure
+
 
 # -------------------------------------------------------------------------
 # GLOBAL STATE
@@ -217,9 +224,11 @@ def fetch_real_price(token: str) -> float:
 def fetch_crypto_news(token: str) -> List[str]:
     """
     Fetch recent news headlines from CryptoPanic (Developer V2 API).
+    Uses multiple API keys with automatic fallback on rate limit.
     """
-    token_lower = token.lower()
+    global CRYPTOPANIC_KEY_INDEX
     
+    token_lower = token.lower()
     
     # Hybrid Mapping: Use Tickers where they are known to work better (SOL, JUP),
     # and Slugs where requested/official (PENGU, JupSOL)
@@ -235,83 +244,100 @@ def fetch_crypto_news(token: str) -> List[str]:
     # Get mapped currency or default to uppercase token symbol
     query_currency = currency_map.get(token_lower, token.upper())
     
-    # V2 Developer Endpoint
-    url = (
-        "https://cryptopanic.com/api/developer/v2/posts/"
-        f"?auth_token={CRYPTOPANIC_API_KEY}"
-        f"&currencies={query_currency}"
-        "&kind=news"
-        "&public=true"
-    )
-    
-    try:
-        # User-Agent is critical
-        headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-        }
+    # Try each API key until one works
+    num_keys = len(CRYPTOPANIC_API_KEYS)
+    for attempt in range(num_keys):
+        current_key = CRYPTOPANIC_API_KEYS[CRYPTOPANIC_KEY_INDEX]
         
-        print(f"  [>] Fetching news for {token_lower} ({query_currency})...")
-        response = requests.get(url, headers=headers, timeout=5)
+        # V2 Developer Endpoint
+        url = (
+            "https://cryptopanic.com/api/developer/v2/posts/"
+            f"?auth_token={current_key}"
+            f"&currencies={query_currency}"
+            "&kind=news"
+            "&public=true"
+        )
         
-        if response.status_code == 200:
-            data = response.json()
-            results = data.get('results', [])
+        try:
+            # User-Agent is critical
+            headers = {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+            }
             
-            # --- 24h (Soft) FILTERING LOGIC ---
-            import datetime
+            print(f"  [>] Fetching news for {token_lower} ({query_currency}) with key #{CRYPTOPANIC_KEY_INDEX + 1}...")
+            response = requests.get(url, headers=headers, timeout=5)
             
-            # Use UTC for strict comparison
-            now = datetime.datetime.now(datetime.timezone.utc)
-            cutoff_24h = now - datetime.timedelta(hours=24)
-            cutoff_72h = now - datetime.timedelta(hours=72)
+            # Rate limit or auth error - rotate to next key
+            if response.status_code in [401, 403, 429]:
+                print(f"  [!] Key #{CRYPTOPANIC_KEY_INDEX + 1} failed (status {response.status_code}). Trying next key...")
+                CRYPTOPANIC_KEY_INDEX = (CRYPTOPANIC_KEY_INDEX + 1) % num_keys
+                continue
             
-            fresh_headlines = []
-            older_headlines = []
-            
-            for post in results:
-                title = post.get('title')
-                pub_str = post.get('published_at') # e.g. "2026-01-06T16:40:00Z"
+            if response.status_code == 200:
+                data = response.json()
+                results = data.get('results', [])
                 
-                if not title or not pub_str:
-                    continue
+                # --- 24h (Soft) FILTERING LOGIC ---
+                import datetime
+                
+                # Use UTC for strict comparison
+                now = datetime.datetime.now(datetime.timezone.utc)
+                cutoff_24h = now - datetime.timedelta(hours=24)
+                cutoff_72h = now - datetime.timedelta(hours=72)
+                
+                fresh_headlines = []
+                older_headlines = []
+                
+                for post in results:
+                    title = post.get('title')
+                    pub_str = post.get('published_at') # e.g. "2026-01-06T16:40:00Z"
                     
-                try:
-                    # Clean 'Z' for ISO compatible parsing if needed
-                    if pub_str.endswith('Z'):
-                        pub_str = pub_str[:-1] + '+00:00'
+                    if not title or not pub_str:
+                        continue
                         
-                    pub_date = datetime.datetime.fromisoformat(pub_str)
-                    
-                    if pub_date >= cutoff_24h:
-                        fresh_headlines.append(title)
-                    elif pub_date >= cutoff_72h:
-                        older_headlines.append(title)
-                except Exception as parse_err:
-                    print(f"  [!] Date parsing failed for '{pub_str}': {parse_err}")
-                    continue
+                    try:
+                        # Clean 'Z' for ISO compatible parsing if needed
+                        if pub_str.endswith('Z'):
+                            pub_str = pub_str[:-1] + '+00:00'
+                            
+                        pub_date = datetime.datetime.fromisoformat(pub_str)
+                        
+                        if pub_date >= cutoff_24h:
+                            fresh_headlines.append(title)
+                        elif pub_date >= cutoff_72h:
+                            older_headlines.append(title)
+                    except Exception as parse_err:
+                        print(f"  [!] Date parsing failed for '{pub_str}': {parse_err}")
+                        continue
 
-            # STRATEGY: Prefer Fresh > Then Older > Then Raw Fallback
-            if fresh_headlines:
-                print(f"  [+] News for {token_lower}: Found {len(fresh_headlines)} FRESH headlines (<24h).")
-                return fresh_headlines
-            elif older_headlines:
-                print(f"  [~] News for {token_lower}: No fresh news. Returning {len(older_headlines)} OLDER headlines (<72h).")
-                return older_headlines
+                # STRATEGY: Prefer Fresh > Then Older > Then Raw Fallback
+                if fresh_headlines:
+                    print(f"  [+] News for {token_lower}: Found {len(fresh_headlines)} FRESH headlines (<24h).")
+                    return fresh_headlines
+                elif older_headlines:
+                    print(f"  [~] News for {token_lower}: No fresh news. Returning {len(older_headlines)} OLDER headlines (<72h).")
+                    return older_headlines
+                else:
+                    # Fallback: Just give the top 5 raw results if we have them
+                    print(f"  [-] News for {token_lower}: No recent news. Returning top 5 raw posts as fallback.")
+                    raw_headlines = [p['title'] for p in results[:5] if p.get('title')]
+                    return raw_headlines
             else:
-                # Fallback: Just give the top 5 raw results if we have them
-                print(f"  [-] News for {token_lower}: No recent news. Returning top 5 raw posts as fallback.")
-                raw_headlines = [p['title'] for p in results[:5] if p.get('title')]
-                return raw_headlines
-        else:
-            # Suppress verbose HTML errors
-            if "<html" in response.text[:50].lower():
-                print(f"  [!] News API unavailable (Status {response.status_code}) - likely network blocked.")
-            else:
-                print(f"  [!] CryptoPanic API Error {response.status_code}: {response.text[:100]}")
-            return []
-    except Exception as e:
-        print(f"  [!] News fetch error for {token_lower}: {e}")
-        return []
+                # Suppress verbose HTML errors
+                if "<html" in response.text[:50].lower():
+                    print(f"  [!] News API unavailable (Status {response.status_code}) - likely network blocked.")
+                else:
+                    print(f"  [!] CryptoPanic API Error {response.status_code}: {response.text[:100]}")
+                return []
+        except Exception as e:
+            print(f"  [!] News fetch error for {token_lower}: {e}")
+            # Rotate to next key on exception too
+            CRYPTOPANIC_KEY_INDEX = (CRYPTOPANIC_KEY_INDEX + 1) % num_keys
+            continue
+    
+    print(f"  [!] All {num_keys} API keys exhausted for {token_lower}.")
+    return []
+
 
 def replace_nan(obj):
     """Recursively replace NaN/Infinity with None."""
