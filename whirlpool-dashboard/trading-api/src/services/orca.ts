@@ -10,6 +10,7 @@ import {
 } from "@orca-so/whirlpools-sdk";
 import { Percentage } from "@orca-so/common-sdk";
 import Decimal from "decimal.js";
+const DecimalJs = Decimal.default || Decimal;
 
 export interface OrcaQuoteResult {
     route: "ORCA";
@@ -56,7 +57,7 @@ export async function getOrcaQuoteWithTx(params: {
     const provider = new AnchorProvider(connection, wallet, {
         commitment: "confirmed",
     });
-    const ctx = WhirlpoolContext.from(connection, wallet, ORCA_WHIRLPOOL_PROGRAM_ID);
+    const ctx = WhirlpoolContext.from(connection, wallet);
     const client = buildWhirlpoolClient(ctx);
 
     // Find the whirlpool for this token pair
@@ -119,9 +120,9 @@ export async function getOrcaQuoteWithTx(params: {
         inputTokenMint,
         amountBN,
         slippage,
-        ctx.program.programId,
+        ORCA_WHIRLPOOL_PROGRAM_ID,
         ctx.fetcher,
-        { refresh: true }
+        { refresh: true } as any
     );
 
     // Build unsigned transaction
@@ -132,8 +133,8 @@ export async function getOrcaQuoteWithTx(params: {
     const serialized = Buffer.from(transaction.transaction.serialize()).toString("base64");
 
     // Calculate price impact (rough estimate)
-    const inDecimal = new Decimal(amount);
-    const outDecimal = new Decimal(quote.estimatedAmountOut.toString());
+    const inDecimal = new DecimalJs(amount);
+    const outDecimal = new DecimalJs(quote.estimatedAmountOut.toString());
 
     return {
         route: "ORCA",
