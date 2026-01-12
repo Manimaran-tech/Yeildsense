@@ -106,7 +106,7 @@ export const PositionList = () => {
                     <p className="text-sm text-slate-500 mt-2">Open a position in any pool to get started.</p>
                 </div>
             ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 gap-6">
                     {positions.map((pos) => (
                         <div key={pos.address} className="bg-[#0a0e1a] border border-[#1e293b] rounded-2xl p-6 hover:shadow-2xl hover:border-blue-500/30 transition-all duration-300 group relative overflow-hidden">
                             {/* Gradient Glow Effect on Hover */}
@@ -254,6 +254,9 @@ export const PositionList = () => {
                         isOpen={isDepositModalOpen}
                         onClose={handleModalClose}
                         poolAddress={selectedPosition.whirlpoolAddress}
+                        tokenA={selectedPosition.poolPair.split('/')[0]}
+                        tokenB={selectedPosition.poolPair.split('/')[1]}
+                        onSuccess={handleSuccess}
                     />
                 </>
             )}

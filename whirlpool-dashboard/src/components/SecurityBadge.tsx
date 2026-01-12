@@ -61,8 +61,8 @@ export const SecurityBadge: FC<SecurityBadgeProps> = ({
             {/* Main Badge */}
             <div className={`
                 inline-flex items-center gap-2 
-                bg-gradient-to-r from-emerald-500/20 to-teal-500/20 
-                border border-emerald-500/40 
+                bg-emerald-900 
+                border border-emerald-600 
                 rounded-lg ${sizeClasses[size]}
                 text-emerald-400
             `}>
@@ -71,7 +71,7 @@ export const SecurityBadge: FC<SecurityBadgeProps> = ({
             </div>
 
             {/* Value Display */}
-            <div className="flex items-center gap-3 bg-card/50 border border-border rounded-lg p-3">
+            <div className="flex items-center gap-3 bg-card border border-border rounded-lg p-3">
                 {/* Original Value */}
                 <div className="flex-1">
                     <div className="text-xs text-muted-foreground mb-1 flex items-center gap-1">
@@ -104,7 +104,7 @@ export const SecurityBadge: FC<SecurityBadgeProps> = ({
                             <span>Encrypted</span>
                         </div>
                         <div className="flex items-center gap-2">
-                            <code className="font-mono text-xs text-emerald-400/80 bg-emerald-500/10 px-1.5 py-0.5 rounded">
+                            <code className="font-mono text-xs text-emerald-400 bg-emerald-900 px-1.5 py-0.5 rounded">
                                 {formatEncryptedDisplay(encryptedValue, 10)}
                             </code>
                             <button
@@ -126,7 +126,7 @@ export const SecurityBadge: FC<SecurityBadgeProps> = ({
                 {allowToggle && (
                     <button
                         onClick={() => setIsRevealed(!isRevealed)}
-                        className="p-2 rounded-lg hover:bg-muted/50 transition-colors text-muted-foreground hover:text-foreground"
+                        className="p-2 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
                         title={isRevealed ? 'Hide value' : 'Show value'}
                     >
                         {isRevealed ? <EyeOff size={14} /> : <Eye size={14} />}
@@ -148,7 +148,7 @@ export const InlineSecurityIndicator: FC<InlineSecurityIndicatorProps> = ({ isSe
     if (!isSecured) return null;
 
     return (
-        <span className="inline-flex items-center gap-1 text-xs text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded">
+        <span className="inline-flex items-center gap-1 text-xs text-emerald-400 bg-emerald-900 px-1.5 py-0.5 rounded">
             <Shield size={10} />
             <span>Secured</span>
         </span>
@@ -174,12 +174,12 @@ export const SecurityStatusBanner: FC<SecurityStatusBannerProps> = ({
     return (
         <div className={`
             flex items-center gap-2 
-            bg-gradient-to-r from-emerald-500/10 via-teal-500/10 to-cyan-500/10
-            border border-emerald-500/30 
+            bg-emerald-900
+            border border-emerald-600 
             rounded-lg p-3 
             ${className}
         `}>
-            <div className="p-2 rounded-full bg-emerald-500/20">
+            <div className="p-2 rounded-full bg-emerald-800">
                 <ShieldCheck size={16} className="text-emerald-400" />
             </div>
             <div className="flex-1">

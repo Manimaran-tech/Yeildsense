@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { FC } from 'react';
-import { X, Loader2, AlertTriangle } from 'lucide-react';
+import { X, Loader2, AlertTriangle, Minus } from 'lucide-react';
 import { useWallet, useConnection } from '@solana/wallet-adapter-react';
 import { api } from '../api';
 import { deserializeTransaction } from '../utils/transactions';
@@ -29,18 +29,6 @@ export const WithdrawModal: FC<WithdrawModalProps> = ({ isOpen, onClose, positio
 
     if (!isOpen) return null;
 
-    // Fetch position details to adjust liquidity calculation if needed
-    // But for now, we assume we want to withdraw % of current liquidity.
-    // The backend handles the exact math.
-    // We actually need the current liquidity to calculate the amount to withdraw *if* we pass exact liquidity to backend.
-    // My api.withdraw expects `liquidity` amount.
-    // So I DO need to know the total liquidity of the position here.
-    // I can fetch it via api.getPositions or api.getPosition(mint).
-
-    // TODO: We need the position's current liquidity to calculate the amount.
-    // For now, let's assume the user has to wait for a moment or we fetch it when modal opens.
-    // Since we don't have it in props (only address), we should fetch it.
-
     const handleWithdraw = async () => {
         if (!publicKey || !signTransaction) {
             setErrorMessage("Wallet not connected. Please connect your wallet.");
@@ -53,14 +41,6 @@ export const WithdrawModal: FC<WithdrawModalProps> = ({ isOpen, onClose, positio
 
         try {
             console.log("Withdraw: Fetching position info for:", positionAddress);
-            // We need to find the position to get its total liquidity
-            // Since props only has address, we might need to iterate or fetch specific.
-            // Let's assume we can fetch by mint if positionAddress is mint, or we search.
-            // Actually, `positionAddress` prop is usually the Pubkey string.
-            // Backend `getPositions` returns list.
-
-            // Optimization: Pass liquidity as prop to Modal? 
-            // For now, let's fetch all positions and find this one (inefficient but safe).
             const positions = await api.getPositions(publicKey.toString());
             const position = positions.find(p => p.positionAddress === positionAddress);
 
@@ -90,14 +70,12 @@ export const WithdrawModal: FC<WithdrawModalProps> = ({ isOpen, onClose, positio
                 throw new Error(response.error || "Failed to build transaction");
             }
 
-            // Deserialize transaction
             const transaction = deserializeTransaction(response.serializedTransaction);
 
             setTxStatus('signing');
             console.log("Withdraw: Requesting wallet signature...");
 
             const signedTx = await signTransaction(transaction);
-
             const signature = await connection.sendRawTransaction(signedTx.serialize());
 
             setTxSignature(signature);
@@ -106,10 +84,7 @@ export const WithdrawModal: FC<WithdrawModalProps> = ({ isOpen, onClose, positio
 
             await connection.confirmTransaction(signature, 'confirmed');
 
-            // Success
             setTxStatus('success');
-            // We don't have exact token amounts here without decoding logs or simulating
-            // For now, we can hide the specific amounts or just show success
             setWithdrawnAmounts(null);
 
             if (onSuccess) {
@@ -138,137 +113,175 @@ export const WithdrawModal: FC<WithdrawModalProps> = ({ isOpen, onClose, positio
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-            <div className="bg-card w-full max-w-lg rounded-xl border border-border shadow-2xl animate-in fade-in zoom-in-95 duration-200">
-                <div className="flex items-center justify-between p-6 border-b border-border">
-                    <h3 className="text-xl font-bold">Withdraw Liquidity</h3>
-                    <button onClick={onClose} className="text-muted-foreground hover:text-foreground transition-colors">
-                        <X size={24} />
-                    </button>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md">
+            <div className="bg-[#0a0e1a] w-full max-w-lg rounded-2xl border border-[#1e293b] shadow-2xl shadow-purple-500/10 animate-in fade-in zoom-in-95 duration-300 overflow-hidden">
+                {/* Premium Header with gradient accent */}
+                <div className="relative">
+                    <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 via-blue-500/10 to-cyan-500/10" />
+                    <div className="relative flex items-center justify-between p-6 border-b border-[#1e293b]">
+                        <div className="flex items-center gap-3">
+                            <div className="p-2 rounded-xl bg-gradient-to-br from-purple-500/20 to-blue-500/20 border border-purple-500/30">
+                                <Minus size={20} className="text-purple-400" />
+                            </div>
+                            <h3 className="text-xl font-bold bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
+                                Withdraw Liquidity
+                            </h3>
+                        </div>
+                        <button
+                            onClick={onClose}
+                            className="p-2 rounded-xl bg-[#1e293b] hover:bg-[#2d3a4f] text-gray-400 hover:text-white transition-all duration-200"
+                        >
+                            <X size={20} />
+                        </button>
+                    </div>
                 </div>
 
-                <div className="p-6 space-y-6">
+                <div className="p-6 space-y-5">
                     {/* Percentage Slider */}
-                    <div className="space-y-4">
-                        <div>
-                            <label className="block text-sm font-medium mb-2">Amount to Withdraw: {percentage}%</label>
+                    <div className="space-y-3">
+                        <div className="flex items-center justify-between">
+                            <label className="text-sm font-medium text-gray-300">Amount to Withdraw</label>
+                            <span className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">
+                                {percentage}%
+                            </span>
+                        </div>
+                        <div className="relative h-3">
+                            {/* Background track */}
+                            <div className="absolute inset-0 bg-[#1e293b] rounded-full" />
+                            {/* Progress fill */}
+                            <div
+                                className="absolute top-0 left-0 h-full rounded-full bg-gradient-to-r from-purple-500 to-blue-500"
+                                style={{ width: `${percentage}%` }}
+                            />
+                            {/* Slider input */}
                             <input
                                 type="range"
                                 min="0"
                                 max="100"
                                 value={percentage}
                                 onChange={(e) => setPercentage(parseInt(e.target.value))}
-                                className="w-full accent-primary h-2 bg-secondary rounded-lg appearance-none cursor-pointer"
+                                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                             />
-                            <div className="flex justify-between text-sm text-muted-foreground mt-1 font-mono">
-                                <span>0%</span>
-                                <span>50%</span>
-                                <span>100%</span>
-                            </div>
+                            {/* Custom thumb */}
+                            <div
+                                className="absolute top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-white border-2 border-purple-500 shadow-lg shadow-purple-500/50 pointer-events-none"
+                                style={{ left: `calc(${percentage}% - 10px)` }}
+                            />
                         </div>
+                        <div className="flex justify-between text-xs text-gray-500 font-mono">
+                            <span>0%</span>
+                            <span>50%</span>
+                            <span>100%</span>
+                        </div>
+                    </div>
 
-                        {/* Quick select buttons */}
-                        <div className="flex gap-2">
-                            {[25, 50, 75, 100].map(p => (
-                                <button
-                                    key={p}
-                                    onClick={() => setPercentage(p)}
-                                    className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all ${percentage === p
-                                        ? 'bg-primary text-primary-foreground'
-                                        : 'bg-muted/50 text-muted-foreground hover:bg-muted'
-                                        }`}
+                    {/* Premium Quick select buttons */}
+                    <div className="flex gap-2">
+                        {[25, 50, 75, 100].map(p => (
+                            <button
+                                key={p}
+                                onClick={() => setPercentage(p)}
+                                className={`flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 ${percentage === p
+                                    ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-lg shadow-purple-500/25'
+                                    : 'bg-[#1e293b] text-gray-400 hover:bg-[#2d3a4f] hover:text-white border border-[#2d3a4f]'
+                                    }`}
+                            >
+                                {p}%
+                            </button>
+                        ))}
+                    </div>
+
+                    {/* Position Info Card */}
+                    <div className="bg-[#111827] p-4 rounded-xl border border-[#1e293b] space-y-3">
+                        <div className="flex justify-between items-center">
+                            <span className="text-sm text-gray-400">Position</span>
+                            <span className="font-mono text-xs bg-[#1e293b] px-3 py-1.5 rounded-lg text-gray-300">
+                                {positionAddress.slice(0, 8)}...{positionAddress.slice(-6)}
+                            </span>
+                        </div>
+                        {percentage === 100 && (
+                            <div className="flex items-center gap-2 p-3 bg-amber-500/10 border border-amber-500/30 rounded-lg">
+                                <AlertTriangle size={16} className="text-amber-400" />
+                                <span className="text-xs text-amber-300">Withdrawing 100% will empty this position</span>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Inco Security Status */}
+                    <div className="space-y-2">
+                        <SecurityStatusBanner isEncrypted={true} tokenSymbol="liquidity" />
+                        {encryptedWithdrawAmount && (
+                            <div className="flex items-center gap-2 text-xs text-gray-400 p-2 bg-[#111827] rounded-lg">
+                                <span>🔒 Encrypted:</span>
+                                <code className="text-emerald-400 bg-emerald-900/50 px-2 py-1 rounded font-mono">
+                                    {formatEncryptedDisplay(encryptedWithdrawAmount.encrypted, 12)}
+                                </code>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Transaction Status */}
+                    {txStatus !== 'idle' && (
+                        <div className={`p-4 rounded-xl border backdrop-blur-sm ${txStatus === 'success'
+                            ? 'bg-emerald-500/10 border-emerald-500/30'
+                            : txStatus === 'error'
+                                ? 'bg-red-500/10 border-red-500/30'
+                                : 'bg-blue-500/10 border-blue-500/30'
+                            }`}>
+                            <div className="flex items-center gap-3">
+                                {txStatus !== 'success' && txStatus !== 'error' && (
+                                    <Loader2 className="animate-spin" size={18} />
+                                )}
+                                <span className={`text-sm font-medium ${txStatus === 'success' ? 'text-emerald-400' : txStatus === 'error' ? 'text-red-400' : 'text-blue-400'}`}>
+                                    {getStatusMessage()}
+                                </span>
+                            </div>
+                            {txSignature && (
+                                <a
+                                    href={`https://solscan.io/tx/${txSignature}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-flex items-center gap-1 text-xs text-purple-400 hover:text-purple-300 mt-3 transition-colors"
                                 >
-                                    {p}%
-                                </button>
-                            ))}
-                        </div>
-
-                        {/* Position Info */}
-                        <div className="bg-muted/30 p-4 rounded-lg space-y-2 border border-border/50">
-                            <div className="flex justify-between text-sm">
-                                <span className="text-muted-foreground">Position</span>
-                                <span className="font-mono text-xs">{positionAddress.slice(0, 8)}...{positionAddress.slice(-6)}</span>
-                            </div>
-                            {percentage === 100 && (
-                                <div className="flex items-center gap-2 text-yellow-400 text-xs pt-2 border-t border-border/50">
-                                    <AlertTriangle size={14} />
-                                    <span>Withdrawing 100% will empty this position</span>
-                                </div>
+                                    View on Solscan →
+                                </a>
+                            )}
+                            {errorMessage && (
+                                <p className="text-xs text-red-400 mt-2">{errorMessage}</p>
                             )}
                         </div>
+                    )}
 
-                        {/* Inco Security Status */}
-                        <div className="space-y-2">
-                            <SecurityStatusBanner isEncrypted={true} tokenSymbol="liquidity" />
-                            {encryptedWithdrawAmount && (
-                                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                                    <span>🔒 Encrypted:</span>
-                                    <code className="text-emerald-400/70 bg-emerald-500/10 px-1.5 py-0.5 rounded">
-                                        {formatEncryptedDisplay(encryptedWithdrawAmount.encrypted, 12)}
-                                    </code>
-                                </div>
-                            )}
-                        </div>
-
-                        {/* Transaction Status */}
-                        {txStatus !== 'idle' && (
-                            <div className={`p-4 rounded-lg border ${txStatus === 'success'
-                                ? 'bg-green-500/10 border-green-500/30'
-                                : txStatus === 'error'
-                                    ? 'bg-red-500/10 border-red-500/30'
-                                    : 'bg-blue-500/10 border-blue-500/30'
-                                }`}>
-                                <div className="flex items-center gap-2">
-                                    {txStatus !== 'success' && txStatus !== 'error' && (
-                                        <Loader2 className="animate-spin" size={16} />
-                                    )}
-                                    <span className={`text-sm ${txStatus === 'success' ? 'text-green-400' : txStatus === 'error' ? 'text-red-400' : 'text-blue-400'}`}>
-                                        {getStatusMessage()}
-                                    </span>
-                                </div>
-                                {txSignature && (
-                                    <a
-                                        href={`https://solscan.io/tx/${txSignature}`}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="text-xs text-primary hover:underline mt-2 block"
-                                    >
-                                        View on Solscan →
-                                    </a>
-                                )}
-                                {errorMessage && (
-                                    <p className="text-xs text-red-400 mt-2">{errorMessage}</p>
-                                )}
-                            </div>
-                        )}
-
-                        {/* Withdrawn Amounts */}
-                        {txStatus === 'success' && withdrawnAmounts && (
-                            <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-4">
-                                <h4 className="text-sm font-medium text-green-400 mb-2">Received</h4>
+                    {/* Withdrawn Amounts */}
+                    {txStatus === 'success' && withdrawnAmounts && (
+                        <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-4">
+                            <h4 className="text-sm font-semibold text-emerald-400 mb-3">Received</h4>
+                            <div className="space-y-2">
                                 <div className="flex justify-between text-sm">
-                                    <span className="text-muted-foreground">SOL</span>
-                                    <span className="font-mono text-green-400">{withdrawnAmounts.tokenA}</span>
+                                    <span className="text-gray-400">SOL</span>
+                                    <span className="font-mono font-semibold text-emerald-400">{withdrawnAmounts.tokenA}</span>
                                 </div>
-                                <div className="flex justify-between text-sm mt-1">
-                                    <span className="text-muted-foreground">USDC</span>
-                                    <span className="font-mono text-green-400">{withdrawnAmounts.tokenB}</span>
+                                <div className="flex justify-between text-sm">
+                                    <span className="text-gray-400">USDC</span>
+                                    <span className="font-mono font-semibold text-emerald-400">{withdrawnAmounts.tokenB}</span>
                                 </div>
                             </div>
-                        )}
-
-                        {/* Info */}
-                        <div className="text-xs text-muted-foreground">
-                            <p>⚡ Encrypted transaction executed on Solana. Gas fees paid in SOL.</p>
                         </div>
+                    )}
+
+                    {/* Info Footer */}
+                    <div className="flex items-center gap-2 text-xs text-gray-500 p-3 bg-[#111827] rounded-lg">
+                        <span className="text-amber-400">⚡</span>
+                        <span>Encrypted transaction executed on Solana. Gas fees paid in SOL.</span>
                     </div>
                 </div>
 
-                <div className="p-6 border-t border-border bg-muted/20 rounded-b-xl">
+                {/* Premium Action Button */}
+                <div className="p-6 border-t border-[#1e293b] bg-[#0d1220]">
                     {txStatus === 'success' ? (
                         <button
                             onClick={onClose}
-                            className="w-full py-4 bg-secondary text-secondary-foreground font-bold rounded-xl hover:bg-secondary/80 transition-colors"
+                            className="w-full py-4 bg-[#1e293b] text-white font-bold rounded-xl hover:bg-[#2d3a4f] transition-all duration-200"
                         >
                             Close
                         </button>
@@ -276,7 +289,13 @@ export const WithdrawModal: FC<WithdrawModalProps> = ({ isOpen, onClose, positio
                         <button
                             onClick={handleWithdraw}
                             disabled={isSubmitting || percentage === 0}
-                            className="w-full py-4 bg-primary text-primary-foreground font-bold rounded-xl hover:bg-primary/90 transition-colors shadow-lg shadow-primary/20 flex items-center justify-center gap-2 disabled:opacity-50"
+                            className="w-full py-4 bg-gradient-to-r from-purple-600 via-blue-600 to-cyan-600 text-white font-bold rounded-xl 
+                                hover:from-purple-500 hover:via-blue-500 hover:to-cyan-500 
+                                transition-all duration-300 
+                                shadow-lg shadow-purple-500/25 hover:shadow-purple-500/40
+                                disabled:opacity-50 disabled:cursor-not-allowed
+                                flex items-center justify-center gap-2
+                                hover:scale-[1.02] active:scale-[0.98]"
                         >
                             {isSubmitting && <Loader2 className="animate-spin" size={20} />}
                             {isSubmitting ? "Processing..." : "Withdraw Liquidity"}
