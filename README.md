@@ -159,8 +159,8 @@ This integration ensures that large liquidity providers can participate in DeFi 
 
 ```bash
 # Clone the repository
-git clone https://github.com/Manimaran-tech/whirl-pool.git
-cd whirl-pool
+git clone https://github.com/Manimaran-tech/Yeildsense.git
+cd Yeildsense
 
 # Install dependencies
 npm install
