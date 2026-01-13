@@ -27,11 +27,32 @@ YieldSense is an advanced liquidity management platform that combines machine le
 
 ---
 
-## Live Deployment
+## Deployment Options
 
-The complete YieldSense application has been recreated and deployed on Thinkroot infrastructure. The production deployment mirrors the full functionality of the local development environment.
+YieldSense is available in two deployment configurations:
 
-**Production URL:** [https://yieldsense-dashboard-egq-zb.thinkroot.app/](https://yieldsense-dashboard-egq-zb.thinkroot.app/)
+### Local Development Environment
+
+The primary development version runs locally and provides the complete feature set. To use this version:
+
+1. Clone the repository from GitHub
+2. Install dependencies for all services (Frontend, Backend, ML API, Trading API)
+3. Run all four services locally using the provided startup script
+
+This approach gives full control over the environment and allows developers to explore, modify, and extend the codebase. Refer to the Quick Start section below for detailed installation instructions.
+
+### Thinkroot Production Deployment
+
+To validate the system architecture under different conditions, the complete YieldSense application was deployed on Thinkroot infrastructure. This deployment allows observation of system performance under:
+
+- Different network latency conditions
+- Varied user behavior patterns
+- Alternative liquidity pool interactions
+- External infrastructure dependencies
+
+The Thinkroot deployment mirrors the full functionality of the local development environment and serves as a reference implementation for production-grade deployments.
+
+**Thinkroot URL:** [https://yieldsense-dashboard-egq-zb.thinkroot.app/](https://yieldsense-dashboard-egq-zb.thinkroot.app/)
 
 ---
 
