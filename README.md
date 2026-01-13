@@ -29,11 +29,9 @@ YieldSense is an advanced liquidity management platform that combines machine le
 
 ## Live Deployment
 
-The application is deployed and accessible at:
+The complete YieldSense application has been recreated and deployed on Thinkroot infrastructure. The production deployment mirrors the full functionality of the local development environment.
 
 **Production URL:** [https://yieldsense-dashboard-egq-zb.thinkroot.app/](https://yieldsense-dashboard-egq-zb.thinkroot.app/)
-
-Hosted on Thinkroot infrastructure for reliable and scalable access.
 
 ---
 
@@ -209,18 +207,6 @@ powershell -ExecutionPolicy Bypass -File start_services.ps1
 ## License
 
 MIT License - see [LICENSE](LICENSE) for details.
-
----
-
-## Contributing
-
-Contributions are welcome. Please review the contributing guidelines before submitting pull requests.
-
----
-
-## Team
-
-**Built for Solana Hackathon 2026**
 
 ---
 
