@@ -43,7 +43,6 @@ services:
   - type: web
     name: yieldsense-frontend
     runtime: static
-    region: oregon
     plan: free
     branch: main
     rootDir: whirlpool-dashboard
