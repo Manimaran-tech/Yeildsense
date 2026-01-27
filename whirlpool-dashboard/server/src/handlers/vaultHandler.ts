@@ -1,6 +1,7 @@
 
 import { PublicKey, Transaction, Keypair, SystemProgram, SYSVAR_RENT_PUBKEY } from "@solana/web3.js";
-import { Program, AnchorProvider, Wallet, Idl, BN } from "@coral-xyz/anchor";
+import { Program, AnchorProvider, Wallet, Idl } from "@coral-xyz/anchor";
+import BN from "bn.js";
 import { ASSOCIATED_TOKEN_PROGRAM_ID, TOKEN_PROGRAM_ID, getAssociatedTokenAddress } from "@solana/spl-token";
 import { getConnection } from "../utils/connection.js";
 import { Request, Response } from "express";
@@ -24,7 +25,7 @@ const INCO_VAULT_PROGRAM_ID = new PublicKey("incoBncSVFXQx8LWWND6rrZMsNpYzXJ8jSK
 // Whirlpool program ID
 const WHIRLPOOL_PROGRAM_ID = new PublicKey("whirLbMiicVdio4qvUfM5KAg6Ct8VwpYzGff3uctyCc");
 // Inco Lightning program ID
-const INCO_LIGHTNING_ID = new PublicKey("IncoLightning1111111111111111111111111111");
+const INCO_LIGHTNING_ID = new PublicKey("5sjEbPiqgZrYwR31ahR6Uk9wf5awoX61YGg7jExQSwaj");
 
 // Minimal IDL definition based on the Rust program
 const VAULT_IDL: any = {

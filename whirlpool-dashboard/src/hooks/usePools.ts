@@ -22,8 +22,8 @@ export interface PoolData {
 
 const POPULAR_POOLS = [
     {
-        // SOL/USDC Whirlpool (64 tick spacing, 0.01% fee)
-        address: "HJPjoWUrhoZzkNfRpHuieeFk9WcZWjwy6PBjZ81ngndJ",
+        // SOL/USDC Whirlpool (64 tick spacing, 0.01% fee) - DEVNET
+        address: "3KBZiL2g8C7tiJ32hTv5v3KM7aK9htpqTw4cTXz1HvPt",
         tokenA: "SOL",
         tokenB: "USDC",
         feeTier: 0.01,
@@ -31,41 +31,50 @@ const POPULAR_POOLS = [
         decimalsB: 6
     },
     {
-        // SOL/USDC Whirlpool (128 tick spacing, 0.04% fee) - more popular
-        address: "Czfq3xZZDmsdGdUyrNLtRhGc47cXcZtLG4crryfu44zE",
+        // SOL/USDC Whirlpool (8 tick spacing, 0.01% fee) - DEVNET (Stable/tight)
+        address: "2WUgXbAmhquXMLhqqUthztDaVYnG8Mmp57CkXNb5ym9G",
         tokenA: "SOL",
         tokenB: "USDC",
-        feeTier: 0.04,
-        decimalsA: 9,
-        decimalsB: 6
-    },
-    {
-        // JupSOL/SOL Whirlpool
-        address: "DtYKbQELgMZ3ihFUrCcCs9gy4djcUuhwgR7UpxVpP2Tg",
-        tokenA: "JupSOL",
-        tokenB: "SOL",
         feeTier: 0.01,
         decimalsA: 9,
-        decimalsB: 9
-    },
-    {
-        // PENGU/SOL Whirlpool (SOL is tokenA in this pool)
-        address: "GF8T9bW7oJr5s4zL9Ai8yMwxx5MHm45G7BvArBkfjGJV",
-        tokenA: "SOL",
-        tokenB: "PENGU",
-        feeTier: 0.30,
-        decimalsA: 9,
         decimalsB: 6
     },
     {
-        // JUP/SOL Whirlpool
-        address: "C1MgLojNLWBKADvu9BHdtgzz1oZX4dZ5zGdGcgvvW8Wz",
-        tokenA: "JUP",
-        tokenB: "SOL",
+        // SOL/USDC Whirlpool (32896 tick spacing - Splash) - DEVNET
+        address: "26WuWhkPBhG5d6kZwHBTruLxLvbSe7C62qH21zpisP9c",
+        tokenA: "SOL",
+        tokenB: "USDC",
         feeTier: 0.30,
-        decimalsA: 6,
-        decimalsB: 9
+        decimalsA: 9,
+        decimalsB: 6
     }
+    // {
+    //     // JupSOL/SOL Whirlpool
+    //     address: "DtYKbQELgMZ3ihFUrCcCs9gy4djcUuhwgR7UpxVpP2Tg",
+    //     tokenA: "JupSOL",
+    //     tokenB: "SOL",
+    //     feeTier: 0.01,
+    //     decimalsA: 9,
+    //     decimalsB: 9
+    // },
+    // {
+    //     // PENGU/SOL Whirlpool (SOL is tokenA in this pool)
+    //     address: "GF8T9bW7oJr5s4zL9Ai8yMwxx5MHm45G7BvArBkfjGJV",
+    //     tokenA: "SOL",
+    //     tokenB: "PENGU",
+    //     feeTier: 0.30,
+    //     decimalsA: 9,
+    //     decimalsB: 6
+    // },
+    // {
+    //     // JUP/SOL Whirlpool
+    //     address: "C1MgLojNLWBKADvu9BHdtgzz1oZX4dZ5zGdGcgvvW8Wz",
+    //     tokenA: "JUP",
+    //     tokenB: "SOL",
+    //     feeTier: 0.30,
+    //     decimalsA: 6,
+    //     decimalsB: 9
+    // }
 ];
 
 export const usePools = () => {
