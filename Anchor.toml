@@ -4,6 +4,10 @@
 
 [programs.localnet]
 whirlpool = "whirLbMiicVdio4qvUfM5KAg6Ct8VwpYzGff3uctyCc"
+inco_vault = "incoBncSVFXQx8LWWND6rrZMsNpYzXJ8jSKSfLHFSE3"
+
+[toolchain]
+anchor_version = "0.32.1"
 
 [registry]
 url = "https://anchor.projectserum.com"
@@ -11,3 +15,6 @@ url = "https://anchor.projectserum.com"
 [provider]
 cluster = "localnet"
 wallet = "~/.config/solana/id.json"
+
+[scripts]
+test = "yarn run ts-mocha -p ./tests/tsconfig.json -t 1000000 tests/**/*.ts"

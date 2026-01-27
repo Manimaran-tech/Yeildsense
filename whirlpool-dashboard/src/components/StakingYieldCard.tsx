@@ -77,7 +77,7 @@ export const StakingYieldCard: FC<StakingYieldCardProps> = ({
         : null;
 
     return (
-        <div className="mt-4 p-4 rounded-xl bg-gradient-to-r from-purple-600/20 to-indigo-600/20 border border-purple-500/30 backdrop-blur-sm">
+        <div className="p-4 rounded-xl bg-gradient-to-r from-purple-600/20 to-indigo-600/20 border border-purple-500/30 backdrop-blur-sm">
             {/* Header */}
             <div className="flex items-center gap-2 mb-3">
                 <Coins className="w-5 h-5 text-purple-400" />

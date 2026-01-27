@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { createPortal } from 'react-dom';
 import type { FC } from 'react';
-import { X, Loader2, Minus, Plus, ChevronLeft, Settings, Info, AlertTriangle } from 'lucide-react';
+import { X, Loader2, Minus, Plus, ChevronLeft, Info, Activity } from 'lucide-react';
 import { getTokenPrice } from '../services/priceService';
 import { useWallet, useConnection } from '@solana/wallet-adapter-react';
 import { api } from '../api';
@@ -11,11 +13,7 @@ import { MLInsightsPanel } from './MLInsightsPanel';
 import { TokenNewsPanel } from './TokenNewsPanel';
 import { StakingYieldCard } from './StakingYieldCard';
 import { encryptAmount, formatEncryptedDisplay, type EncryptedAmount } from '../services/incoService';
-import { SecurityStatusBanner, InlineSecurityIndicator } from './SecurityBadge';
-
-
-
-
+import { SecurityStatusBanner } from './SecurityBadge';
 
 interface CreatePositionPanelProps {
     isOpen: boolean;
@@ -23,7 +21,6 @@ interface CreatePositionPanelProps {
     poolAddress: string | null;
     tokenA: string;
     tokenB: string;
-    feeTier?: number; // Fee tier in percentage (e.g., 0.30, 0.04, 0.01)
 }
 
 type ViewMode = 'deposit' | 'range';
@@ -34,8 +31,7 @@ export const CreatePositionPanel: FC<CreatePositionPanelProps> = ({
     onClose,
     poolAddress,
     tokenA = 'SOL',
-    tokenB = 'USDC',
-    feeTier = 0.30 // Default to standard 30bps tier if not provided
+    tokenB = 'USDC'
 }) => {
     const { publicKey, signTransaction, connected } = useWallet();
     const { connection } = useConnection();
@@ -56,12 +52,9 @@ export const CreatePositionPanel: FC<CreatePositionPanelProps> = ({
     // Deposit state
     const [amountA, setAmountA] = useState<string>('');
     const [amountB, setAmountB] = useState<string>('');
-    const slippage = 1; // 1% default slippage
-
     // Loading and transaction states
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [priceLoading, setPriceLoading] = useState(true);
-    const [liquidityLoading, setLiquidityLoading] = useState(true);
     const [liquidityData, setLiquidityData] = useState<{ tick: number, liquidity: string, price: number }[]>([]);
     const [txStatus, setTxStatus] = useState<'idle' | 'building' | 'encrypting' | 'signing' | 'confirming' | 'success' | 'error'>('idle');
     const [txSignature, setTxSignature] = useState<string | null>(null);
@@ -72,7 +65,6 @@ export const CreatePositionPanel: FC<CreatePositionPanelProps> = ({
     const [encryptedAmountB, setEncryptedAmountB] = useState<EncryptedAmount | null>(null);
     const [_isEncrypting, setIsEncrypting] = useState(false);
 
-
     // Fetch current price on mount
     useEffect(() => {
         if (!isOpen || !poolAddress) return;
@@ -80,37 +72,24 @@ export const CreatePositionPanel: FC<CreatePositionPanelProps> = ({
         const fetchPrice = async (isBackground = false) => {
             if (!isBackground) {
                 setPriceLoading(true);
-                // Reset prices to prevent stale data if we are switching pools
                 if (!isOpen) {
-                    // Only clear if opening fresh. If just refreshing in bg, don't clear.
                     setMinPrice('');
                     setMaxPrice('');
                     setCurrentPrice(0);
                 }
             }
 
-            // Initial Liquidity Fetch
-            if (!isBackground) setLiquidityLoading(true);
+            if (!isBackground) {
+                setPriceLoading(true);
+            }
 
             try {
-                console.log("CreatePositionPanel: ------------------------------------------");
-                console.log(`CreatePositionPanel: Fetching for Pool: ${poolAddress}`);
-                console.log(`CreatePositionPanel: Tokens: ${tokenA} / ${tokenB}`);
-
-                // 1. Fetch USD prices for both tokens (using reliable priceService)
                 const priceA = await getTokenPrice(tokenA);
                 const priceB = await getTokenPrice(tokenB);
-
-                console.log(`CreatePositionPanel: Prices Fetched -> ${tokenA}: $${priceA}, ${tokenB}: $${priceB}`);
 
                 setTokenAPriceUsd(priceA);
                 setTokenBPriceUsd(priceB);
 
-                // 2. Determine which token to display for yield farming
-                // Priority: Show the ALTCOIN (not SOL, not stablecoin)
-                // - SOL/PENGU → show PENGU (altcoin to yield farm)
-                // - JupSOL/SOL → show JupSOL (altcoin to yield farm)
-                // - SOL/USDC → show SOL (no altcoin, so show SOL not stablecoin)
                 const stablecoins = ['USDC', 'USDT'];
                 const isTokenAStable = stablecoins.includes(tokenA);
                 const isTokenBStable = stablecoins.includes(tokenB);
@@ -119,51 +98,28 @@ export const CreatePositionPanel: FC<CreatePositionPanelProps> = ({
 
                 let displayTokenA: boolean;
 
-                if (isTokenAStable) {
-                    // TokenA is stablecoin (USDC/SOL) → show tokenB (SOL)
-                    displayTokenA = false;
-                } else if (isTokenBStable) {
-                    // TokenB is stablecoin (SOL/USDC) → show tokenA (SOL)
-                    displayTokenA = true;
-                } else if (isTokenASOL && !isTokenBSOL) {
-                    // SOL/Altcoin (SOL/PENGU) → show Altcoin (tokenB - PENGU)
-                    displayTokenA = false;
-                } else if (isTokenBSOL && !isTokenASOL) {
-                    // Altcoin/SOL (PENGU/SOL) → show Altcoin (tokenA - PENGU)
-                    displayTokenA = true;
-                } else {
-                    // Both are altcoins or both are SOL → show tokenA
-                    displayTokenA = true;
-                }
+                if (isTokenAStable) displayTokenA = false;
+                else if (isTokenBStable) displayTokenA = true;
+                else if (isTokenASOL && !isTokenBSOL) displayTokenA = false;
+                else if (isTokenBSOL && !isTokenASOL) displayTokenA = true;
+                else displayTokenA = true;
 
                 const displayPrice = displayTokenA ? priceA : priceB;
-                const displayToken = displayTokenA ? tokenA : tokenB;
+                const displayTk = displayTokenA ? tokenA : tokenB;
 
-                console.log(`CreatePositionPanel: Decision -> Displaying: ${displayToken} ($${displayPrice})`);
-                console.log("CreatePositionPanel: ------------------------------------------");
-
-                setDisplayToken(displayToken);
+                setDisplayToken(displayTk);
 
                 if (displayPrice > 0) {
                     setCurrentPrice(displayPrice);
-
-                    // Apply default preset immediately based on this USD price (ONLY on first load)
                     if (!isBackground) {
-                        const percentage = 0.05; // Default 5%
+                        const percentage = 0.05;
                         const min = displayPrice * (1 - percentage);
                         const max = displayPrice * (1 + percentage);
                         setMinPrice(min.toFixed(4));
                         setMaxPrice(max.toFixed(4));
                     }
-                } else {
-                    console.warn("CreatePositionPanel: Failed to fetch USD price for", displayToken);
-                    // If price fetch failed, we shouldn't show stale data 
-                    if (!isBackground && currentPrice === 0) {
-                        // Maybe set error?
-                    }
                 }
 
-                // Fetch real liquidity distribution (background safe) with simple retry
                 let attempts = 0;
                 let success = false;
                 while (attempts < 3 && !success) {
@@ -173,35 +129,21 @@ export const CreatePositionPanel: FC<CreatePositionPanelProps> = ({
                             setLiquidityData(liqDist.distribution);
                             success = true;
                         } else {
-                            // If empty, maybe wait and retry?
                             await new Promise(r => setTimeout(r, 1000));
                         }
                     } catch (liqErr) {
-                        console.error(`CreatePositionPanel: Liquidity fetch error (attempt ${attempts + 1}):`, liqErr);
                         await new Promise(r => setTimeout(r, 1000));
                     }
                     attempts++;
                 }
-
-                if (!success) {
-                    console.warn("CreatePositionPanel: Failed to load liquidity data after 3 attempts.");
-                    // Ensure we don't hold stale data if this was a re-fetch (though we only fetch once now)
-                    // setLiquidityData([]); 
-                }
-
             } catch (error) {
                 console.error("CreatePositionPanel: Price fetch error:", error);
             } finally {
                 setPriceLoading(false);
-                setLiquidityLoading(false);
             }
         };
 
-        // Only fetch once on mount/change. No polling to prevent reload flicker/reset.
         fetchPrice();
-        // const interval = setInterval(() => fetchPrice(true), 30000); 
-        // return () => clearInterval(interval);
-
     }, [isOpen, poolAddress, tokenA, tokenB]);
 
     // Reset states when opening
@@ -222,7 +164,7 @@ export const CreatePositionPanel: FC<CreatePositionPanelProps> = ({
             case '1%': percentage = 0.01; break;
             case '5%': percentage = 0.05; break;
             case '10%': percentage = 0.10; break;
-            default: return; // Custom - don't auto-set
+            default: return;
         }
 
         const min = price * (1 - percentage);
@@ -233,7 +175,7 @@ export const CreatePositionPanel: FC<CreatePositionPanelProps> = ({
         setSelectedPreset(preset);
     }, []);
 
-    // Calculate deposit ratio based on current price and range
+    // Calculate deposit ratio
     const calculateDepositRatio = useCallback((): { ratioA: number; ratioB: number } => {
         if (!minPrice || !maxPrice || currentPrice <= 0) {
             return { ratioA: 50, ratioB: 50 };
@@ -242,84 +184,72 @@ export const CreatePositionPanel: FC<CreatePositionPanelProps> = ({
         const min = parseFloat(minPrice);
         const max = parseFloat(maxPrice);
 
-        if (currentPrice <= min) {
-            return { ratioA: 0, ratioB: 100 };
-        } else if (currentPrice >= max) {
-            return { ratioA: 100, ratioB: 0 };
-        } else {
+        if (currentPrice <= min) return { ratioA: 0, ratioB: 100 };
+        else if (currentPrice >= max) return { ratioA: 100, ratioB: 0 };
+        else {
             const rangePosition = (currentPrice - min) / (max - min);
             const ratioB = Math.round(rangePosition * 100 * 10) / 10;
             return { ratioA: 100 - ratioB, ratioB };
         }
     }, [minPrice, maxPrice, currentPrice]);
 
-    // Calculate exchange rate (Price of A in terms of B)
     const exchangeRate = tokenAPriceUsd && tokenBPriceUsd ? tokenAPriceUsd / tokenBPriceUsd : 0;
-
     const { ratioA, ratioB } = calculateDepositRatio();
 
-    // Check if this is a pegged pair (like JupSOL/SOL) that needs static bars
+    // Calculate Estimated Yield based on range width
+    const estimatedYield = useMemo(() => {
+        if (!minPrice || !maxPrice || currentPrice <= 0) return 0;
+        const min = parseFloat(minPrice);
+        const max = parseFloat(maxPrice);
+        const widthPct = ((max - min) / currentPrice) * 100;
+        if (widthPct <= 0) return 0;
+
+        // Base 15.4% for a 10% total width (±5% preset)
+        // Concentration factor is roughly inverse to width
+        return Math.min(125.5, 15.4 * (10 / widthPct));
+    }, [minPrice, maxPrice, currentPrice]);
+
+    const PRESET_ESTIMATES: Record<string, string> = {
+        '1%': '48.2%',
+        '5%': '15.4%',
+        '10%': '8.2%',
+        'custom': estimatedYield > 0 ? `${estimatedYield.toFixed(1)}%` : '—'
+    };
+
     const isPeggedPair = useMemo(() => {
         const peggedTokens = ['JupSOL', 'mSOL', 'stSOL', 'bSOL', 'jitoSOL'];
         return (peggedTokens.includes(tokenA) && tokenB === 'SOL') ||
             (peggedTokens.includes(tokenB) && tokenA === 'SOL');
     }, [tokenA, tokenB]);
 
-    // Process Liquidity Data for Chart
     const chartBars = useMemo(() => {
         if (!currentPrice) return null;
-
-        // For pegged pairs (JupSOL/SOL etc.) or sparse liquidity data, use static Gaussian distribution
-        // These pairs have very narrow tick ranges that don't map well to the 40% price range visualization
         if (isPeggedPair || liquidityData.length < 20) {
             const buckets = new Array(64).fill(0);
             let maxBucket = 0;
-
-            // Generate a smooth Gaussian distribution centered around the middle
             for (let i = 0; i < 64; i++) {
-                // Distance from center (32)
                 const dist = (i - 32) / 10;
-                // Gaussian curve with some variation
                 const height = Math.exp(-(dist * dist)) * 100;
-                // Add some natural-looking variation
                 const variation = 0.7 + Math.random() * 0.6;
                 buckets[i] = height * variation;
                 if (buckets[i] > maxBucket) maxBucket = buckets[i];
             }
-
             return { buckets, maxBucket, isStatic: true };
         }
-
         if (liquidityData.length === 0) return null;
 
-        const rangeWidth = currentPrice * 0.4; // +/- 20%
+        const rangeWidth = currentPrice * 0.4;
         const step = rangeWidth / 64;
         const startPrice = currentPrice - (rangeWidth / 2);
-
         const buckets = new Array(64).fill(0);
         let maxBucket = 0;
-
         const isDisplayTokenA = displayToken === tokenA;
 
         liquidityData.forEach(tick => {
-            // Normalize tick price to USD based on which token we are displaying
             let tickPriceUsd = 0;
-
-            if (isDisplayTokenA) {
-                // Displaying Token A (e.g. SOL in SOL/USDC, or JupSOL in JupSOL/SOL)
-                // Tick is B/A. Value(A) = Tick(B/A) * Value(B)
-                tickPriceUsd = tick.price * (tokenBPriceUsd || 0);
-            } else {
-                // Displaying Token B (e.g. PENGU in SOL/PENGU)
-                // Tick is B/A. Value(B) = Value(A) / Tick(B/A)
-                if (tick.price > 0) {
-                    tickPriceUsd = (tokenAPriceUsd || 0) / tick.price;
-                }
-            }
-
-            // Safety check for invalid/zero prices
+            if (isDisplayTokenA) tickPriceUsd = tick.price * (tokenBPriceUsd || 0);
+            else if (tick.price > 0) tickPriceUsd = (tokenAPriceUsd || 0) / tick.price;
             if (tickPriceUsd <= 0) return;
-
             if (tickPriceUsd < startPrice || tickPriceUsd > startPrice + rangeWidth) return;
             const bucketIdx = Math.floor((tickPriceUsd - startPrice) / step);
             if (bucketIdx >= 0 && bucketIdx < 64) {
@@ -328,39 +258,28 @@ export const CreatePositionPanel: FC<CreatePositionPanelProps> = ({
                 if (buckets[bucketIdx] > maxBucket) maxBucket = buckets[bucketIdx];
             }
         });
-
         return { buckets, maxBucket, isStatic: false };
     }, [currentPrice, liquidityData, tokenAPriceUsd, tokenBPriceUsd, displayToken, tokenA, isPeggedPair]);
 
-    // Auto-calculate the other token amount based on the deposit ratio
     const handleAmountAChange = useCallback(async (value: string) => {
         setAmountA(value);
-
-        // Encrypt the amount using Inco SDK
         if (value && parseFloat(value) > 0) {
             setIsEncrypting(true);
             try {
                 const encrypted = await encryptAmount(value);
                 setEncryptedAmountA(encrypted);
-                console.log('[CreatePosition] Amount A encrypted:', encrypted.encrypted.substring(0, 20) + '...');
             } catch (err) {
                 console.error('[CreatePosition] Encryption failed:', err);
             } finally {
                 setIsEncrypting(false);
             }
-        } else {
-            setEncryptedAmountA(null);
-        }
+        } else setEncryptedAmountA(null);
 
         if (value && ratioA > 0 && ratioB > 0 && exchangeRate > 0) {
-            // Calculate equivalent amount of tokenB based on ratio
-            // AmountB = AmountA * (PriceA/PriceB) * (ratioB/ratioA)
             const numValue = parseFloat(value);
             if (!isNaN(numValue)) {
                 const calculatedB = numValue * (ratioB / ratioA) * exchangeRate;
                 setAmountB(calculatedB.toFixed(9));
-
-                // Also encrypt amount B
                 try {
                     const encryptedB = await encryptAmount(calculatedB.toFixed(9));
                     setEncryptedAmountB(encryptedB);
@@ -376,31 +295,23 @@ export const CreatePositionPanel: FC<CreatePositionPanelProps> = ({
 
     const handleAmountBChange = useCallback(async (value: string) => {
         setAmountB(value);
-
-        // Encrypt the amount using Inco SDK
         if (value && parseFloat(value) > 0) {
             setIsEncrypting(true);
             try {
                 const encrypted = await encryptAmount(value);
                 setEncryptedAmountB(encrypted);
-                console.log('[CreatePosition] Amount B encrypted:', encrypted.encrypted.substring(0, 20) + '...');
             } catch (err) {
                 console.error('[CreatePosition] Encryption failed:', err);
             } finally {
                 setIsEncrypting(false);
             }
-        } else {
-            setEncryptedAmountB(null);
-        }
+        } else setEncryptedAmountB(null);
 
         if (value && ratioA > 0 && ratioB > 0 && exchangeRate > 0) {
             const numValue = parseFloat(value);
             if (!isNaN(numValue)) {
-                // Reverse calculation
                 const calculatedA = numValue * (ratioA / ratioB) / exchangeRate;
                 setAmountA(calculatedA.toFixed(9));
-
-                // Also encrypt amount A
                 try {
                     const encryptedA = await encryptAmount(calculatedA.toFixed(9));
                     setEncryptedAmountA(encryptedA);
@@ -414,7 +325,6 @@ export const CreatePositionPanel: FC<CreatePositionPanelProps> = ({
         }
     }, [ratioA, ratioB, exchangeRate]);
 
-    // Check if in range
     const isInRange = currentPrice >= parseFloat(minPrice || '0') && currentPrice <= parseFloat(maxPrice || '0');
 
     const handleCreatePosition = async () => {
@@ -422,7 +332,6 @@ export const CreatePositionPanel: FC<CreatePositionPanelProps> = ({
             setErrorMessage("Please connect your wallet first.");
             return;
         }
-
         if (!amountA || !minPrice || !maxPrice) {
             setErrorMessage("Please enter all required fields.");
             return;
@@ -433,58 +342,36 @@ export const CreatePositionPanel: FC<CreatePositionPanelProps> = ({
         setErrorMessage(null);
 
         try {
-            console.log("Creating position:", {
-                poolAddress,
-                minPrice,
-                maxPrice,
-                amountA,
-                slippage
-            });
-
-            // Convert prices from Display (USD) to Pool Units (TokenB / TokenA)
-            // If Token B is NOT a stablecoin (e.g. PENGU), we must divide USD price by Token B USD price.
-            // Example: Lower = $126 (USD/SOL) / $0.01 (USD/PENGU) = 12,600 PENGU/SOL
             let submissionLower = minPrice;
             let submissionUpper = maxPrice;
-
             if (tokenBPriceUsd > 0 && !['USDC', 'USDT'].includes(tokenB)) {
                 submissionLower = (parseFloat(minPrice) / tokenBPriceUsd).toFixed(6);
                 submissionUpper = (parseFloat(maxPrice) / tokenBPriceUsd).toFixed(6);
-                console.log(`Converting USD bounds to Pool Units: ${minPrice} -> ${submissionLower}, ${maxPrice} -> ${submissionUpper}`);
             }
 
-            const response = await api.createOrDeposit({
+            const response = await api.vaultCreatePosition({
                 wallet: publicKey.toString(),
                 whirlpool: poolAddress || '',
                 priceLower: submissionLower,
                 priceUpper: submissionUpper,
-                amountA: amountA
+                amountA: amountA,
+                encryptedAmountA: encryptedAmountA?.encrypted || '',
+                encryptedAmountB: encryptedAmountB?.encrypted || '',
+                amountType: 0 // 0 for Public -> Encrypted conversion in contract
             });
 
             if (!response.success || !response.serializedTransaction) {
                 throw new Error(response.error || "Failed to build transaction");
             }
 
-            // Deserialize transaction
             const transaction = deserializeTransaction(response.serializedTransaction);
-
             setTxStatus('signing');
-            console.log("Building openPosition transaction...");
-            console.log("Requesting wallet signature...");
-
             const signedTx = await signTransaction(transaction);
             const signature = await connection.sendRawTransaction(signedTx.serialize());
-
             setTxSignature(signature);
-
             setTxStatus('confirming');
-            console.log("Transaction sent:", signature);
-
             await connection.confirmTransaction(signature, 'confirmed');
-
-            // Success
             setTxStatus('success');
-
         } catch (error) {
             console.error("Position creation failed:", error);
             setTxStatus('error');
@@ -506,692 +393,406 @@ export const CreatePositionPanel: FC<CreatePositionPanelProps> = ({
         }
     };
 
-    if (!isOpen) return null;
+    const [mounted, setMounted] = useState(false);
+    useEffect(() => { setMounted(true); return () => setMounted(false); }, []);
+    if (!isOpen || !mounted) return null;
 
-    return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-            <div className="bg-black/30 w-full max-w-[1600px] border border-white/10 shadow-2xl animate-in fade-in zoom-in-95 duration-200 backdrop-blur-xl rounded-2xl overflow-hidden">
+    return createPortal(
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-xl overflow-y-auto">
+            {/* Extended Modal for 4-Column Layout */}
+            <motion.div
+                layout
+                className={`bg-[#030712] w-full ${viewMode === 'range' ? 'max-w-[1600px] h-fit' : 'max-w-[1600px] h-[92vh]'} shadow-[0_0_120px_-20px_rgba(0,0,0,1)] animate-in fade-in zoom-in-95 duration-200 rounded-3xl overflow-hidden my-auto border border-white/10 relative flex flex-col transition-all duration-300`}
+            >
+                <div className="absolute inset-0 bg-blue-500/[0.02] pointer-events-none"></div>
+
                 {/* Header */}
                 <div className="flex items-center justify-between p-4 border-b border-white/10 sticky top-0 bg-gradient-to-r from-blue-950/50 to-slate-950/50 backdrop-blur-md z-10">
                     <div className="flex items-center gap-2">
                         {viewMode === 'range' && (
-                            <button
-                                onClick={() => setViewMode('deposit')}
-                                className="text-muted-foreground hover:text-foreground transition-colors"
-                            >
+                            <button onClick={() => setViewMode('deposit')} className="text-muted-foreground hover:text-white transition-colors">
                                 <ChevronLeft size={20} />
                             </button>
                         )}
-                        <h3 className="text-lg font-bold">Create Position</h3>
+                        <h3 className="text-lg font-black text-white tracking-widest uppercase">Create Position</h3>
                     </div>
-                    <button
-                        onClick={onClose}
-                        className="text-muted-foreground hover:text-foreground transition-colors"
-                    >
+                    <button onClick={onClose} className="text-muted-foreground hover:text-white transition-colors">
                         <X size={20} />
                     </button>
                 </div>
 
-                {viewMode === 'deposit' ? (
-                    /* Deposit View - 4 Column Layout: News | Chart | Inputs | AI */
-                    <div className="flex flex-col lg:flex-row h-full">
-                        {/* Column 1: News Panel - Border Right */}
-                        {/* Column 1: News Panel - Border Right */}
-                        {/* Column 1: News Panel - Border Right */}
-                        {/* Column 1: News Panel - Border Right */}
-                        {/* Column 1: News Panel - Border Right */}
-                        {/* Column 1: News Panel - Border Right */}
-                        {/* Column 1: News Panel - Border Right */}
-                        <div className="w-full lg:w-[15%] p-4 bg-gradient-to-br from-blue-950/40 to-slate-950/40 backdrop-blur-md overflow-hidden border-r border-white/5">
-                            <TokenNewsPanel
-                                tokenA={tokenA}
-                                tokenB={tokenB}
-                                isOpen={isOpen}
-                            />
-                        </div>
-
-                        {/* Column 2: Chart - Border Right */}
-                        {/* Column 2: Chart - Border Right */}
-                        {/* Column 2: Chart - Border Right */}
-                        {/* Column 2: Chart - Border Right */}
-                        {/* Column 2: Chart - Border Right */}
-                        {/* Column 2: Chart - Border Right */}
-                        {/* Column 2: Chart - Border Right */}
-                        <div className="w-full lg:w-[35%] p-4 bg-gradient-to-br from-blue-950/40 to-slate-950/40 backdrop-blur-md space-y-4 overflow-hidden flex flex-col border-r border-white/5">
-                            <div className="flex-1 w-full min-h-[350px]">
-                                <PriceChart
-                                    coinId={getCoinGeckoId(displayToken)}
-                                    title={`${displayToken} Price`}
-                                />
+                <AnimatePresence mode="wait">
+                    {viewMode === 'deposit' ? (
+                        /* REVERTED 4-COLUMN LAYOUT WITH BLACK THEME */
+                        <motion.div
+                            key="deposit-view"
+                            initial={{ opacity: 0, x: -20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            exit={{ opacity: 0, x: 20 }}
+                            transition={{ duration: 0.3 }}
+                            className="flex flex-col lg:flex-row flex-1 min-h-0 divide-x divide-white/5 bg-black/20"
+                        >
+                            {/* Column 1: News (16%) */}
+                            <div className="w-full lg:w-[16%] p-4 flex flex-col min-h-0">
+                                <TokenNewsPanel tokenA={tokenA} tokenB={tokenB} isOpen={isOpen} />
                             </div>
 
-                            {/* Staking Yield Card - Shows for LST tokens */}
-                            <StakingYieldCard
-                                tokenA={tokenA}
-                                tokenB={tokenB}
-                                lpAPY={15}
-                            />
-                        </div>
-
-                        {/* Column 3: Inputs (Wider) - Border Right */}
-                        {/* Column 3: Inputs (Wider) - Border Right */}
-                        {/* Column 3: Inputs (Wider) - Border Right */}
-                        {/* Column 3: Inputs (Wider) - Border Right */}
-                        {/* Column 3: Inputs (Wider) - Border Right */}
-                        {/* Column 3: Inputs (Wider) - Border Right */}
-                        {/* Column 3: Inputs (Wider) - Border Right */}
-                        <div className="w-full lg:w-[28%] p-4 space-y-4 bg-gradient-to-br from-blue-950/40 to-slate-950/40 backdrop-blur-md overflow-hidden border-r border-white/5">
-                            {/* Info Banner */}
-                            <div className="bg-[#172554] border border-blue-900/50 rounded-lg p-3 flex items-start gap-2">
-                                <Info className="text-blue-400 shrink-0 mt-0.5" size={16} />
-                                <p className="text-xs text-blue-200">
-                                    Fees are earned only while the price is within your selected range.
-                                </p>
+                            {/* Column 2: Analysis & Performance (32%) */}
+                            <div className="w-full lg:w-[32%] p-2 space-y-2 flex flex-col min-h-0 bg-black/10 overflow-y-auto custom-scrollbar">
+                                <div className="min-h-[360px] flex-shrink-0">
+                                    <PriceChart coinId={getCoinGeckoId(displayToken)} title={`${displayToken} Market Performance`} />
+                                </div>
+                                <div className="mt-4">
+                                    <StakingYieldCard tokenA={tokenA} tokenB={tokenB} lpAPY={estimatedYield} />
+                                </div>
                             </div>
 
-                            {/* Range Presets */}
-                            <div className="flex items-center gap-2">
-                                {(['1%', '5%', '10%', 'custom'] as RangePreset[]).map((preset) => (
-                                    <button
-                                        key={preset}
-                                        onClick={() => {
-                                            if (preset === 'custom') {
-                                                setSelectedPreset('custom');
-                                                setViewMode('range');
-                                            } else {
-                                                applyPreset(preset, currentPrice);
-                                            }
-                                        }}
-                                        className={`flex-1 py-2 px-3 rounded-lg text-sm font-bold transition-all border-2 ${selectedPreset === preset
-                                            ? 'bg-primary border-primary text-primary-foreground shadow-md'
-                                            : 'bg-slate-900 border-slate-800 text-slate-400 hover:bg-slate-800 hover:border-slate-700 hover:text-white'
-                                            }`}
-                                    >
-                                        {preset === 'custom' ? 'Custom' : `±${preset}`}
-                                    </button>
-                                ))}
-                            </div>
+                            {/* Column 3: Position Controls (28%) */}
+                            <div className="w-full lg:w-[28%] p-4 space-y-4 flex flex-col min-h-0 bg-black/20">
+                                {/* Range Presets */}
+                                <div className="grid grid-cols-4 gap-1.5 p-1 bg-black/40 rounded-xl border border-white/5">
+                                    {(['1%', '5%', '10%', 'custom'] as RangePreset[]).map((preset) => (
+                                        <button
+                                            key={preset}
+                                            onClick={() => {
+                                                if (preset === 'custom') { setSelectedPreset('custom'); setViewMode('range'); }
+                                                else { applyPreset(preset, currentPrice); }
+                                            }}
+                                            className={`py-2 rounded-lg transition-all border flex flex-col items-center gap-0.5 ${selectedPreset === preset
+                                                ? 'bg-blue-600/20 border-blue-500 text-blue-400 shadow-[0_0_10px_rgba(59,130,246,0.2)]'
+                                                : 'bg-white/5 border-transparent text-slate-500 hover:bg-white/10 hover:text-slate-300'
+                                                }`}
+                                        >
+                                            <span className="text-[10px] font-black uppercase tracking-tighter">
+                                                {preset === 'custom' ? 'Custom' : `±${preset}`}
+                                            </span>
+                                            <span className={`text-[8px] font-bold ${selectedPreset === preset ? 'text-blue-300/80' : 'text-slate-600'}`}>
+                                                {PRESET_ESTIMATES[preset]}
+                                            </span>
+                                        </button>
+                                    ))}
+                                </div>
 
-                            {/* Range Display - Solid Panel */}
-                            <div className="bg-[#0a0e1a] rounded-xl overflow-hidden ring-1 ring-[#1e293b]">
-                                {/* Table Header */}
-                                <div className="px-4 py-3 bg-[#111827] border-b border-[#1e293b]">
-                                    <div className="flex items-center gap-2">
-                                        <span className="w-2 h-2 rounded-full bg-blue-500"></span>
-                                        <span className="text-xs font-bold text-slate-300 uppercase tracking-widest">Position Details</span>
+                                {/* Summary Card */}
+                                <div className="bg-black/40 rounded-2xl border border-white/5 overflow-hidden flex flex-col shadow-xl">
+                                    <div className="px-4 py-3 bg-white/[0.03] border-b border-white/5 flex items-center justify-between">
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-1.5 h-1.5 rounded-full bg-blue-500 shadow-[0_0_8px_#3b82f6]"></div>
+                                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Position Summary</span>
+                                        </div>
+                                        <SecurityStatusBanner isEncrypted={true} tokenSymbol={tokenA} compact />
+                                    </div>
+                                    <div className="p-4 space-y-3">
+                                        <div className="flex justify-between items-center text-xs">
+                                            <span className="text-slate-500 font-medium uppercase tracking-tighter">Current Price</span>
+                                            <span className="text-emerald-400 font-mono font-black">${currentPrice.toFixed(4)}</span>
+                                        </div>
+                                        <div className="flex justify-between items-center text-xs">
+                                            <span className="text-slate-500 font-medium uppercase tracking-tighter">Target Range</span>
+                                            <span className="text-white font-mono font-black">${minPrice} - ${maxPrice}</span>
+                                        </div>
+                                        <div className="h-px bg-white/5"></div>
+                                        <div className="flex justify-between items-center text-xs">
+                                            <span className="text-slate-500 font-medium uppercase tracking-tighter">Deposit Ratio</span>
+                                            <span className="text-blue-400 font-black tracking-tighter">{ratioA.toFixed(0)}% {tokenA} / {ratioB.toFixed(0)}% {tokenB}</span>
+                                        </div>
+                                        {!isInRange && minPrice && maxPrice && (
+                                            <p className="text-[9px] text-yellow-500 font-black uppercase text-center bg-yellow-500/10 py-1 rounded-lg">Out of Range</p>
+                                        )}
                                     </div>
                                 </div>
 
-                                {/* Table Rows */}
-                                <div className="divide-y divide-[#1e293b]">
-                                    {/* Price Range Row */}
-                                    <div className="flex items-center justify-between px-4 py-3 hover:bg-[#1e293b]/20 transition-colors">
-                                        <span className="text-sm text-slate-400 font-medium">Price Range</span>
-                                        <div className="flex items-center gap-1.5 font-mono text-white font-semibold">
-                                            <span>${minPrice || '—'}</span>
-                                            <span className="text-slate-500">-</span>
-                                            <span>${maxPrice || '—'}</span>
-                                        </div>
-                                    </div>
-
-                                    {/* Current Price Row */}
-                                    <div className="flex items-center justify-between px-4 py-3 hover:bg-[#1e293b]/20 transition-colors">
-                                        <span className="text-sm text-slate-400 font-medium">Current Price</span>
-                                        <div className="flex items-center gap-2">
-                                            <span className="font-mono text-white font-semibold">
-                                                {priceLoading ? 'Loading...' : `$${currentPrice.toFixed(4)}`}
-                                            </span>
-                                            <span className="text-xs text-emerald-400 font-medium px-1.5 py-0.5 bg-emerald-500/10 rounded">Live</span>
-                                        </div>
-                                    </div>
-
-                                    {/* Estimated Yield Row (Dynamic) */}
-                                    <div className="flex items-center justify-between px-4 py-3 hover:bg-[#1e293b]/20 transition-colors">
-                                        <div className="flex items-center gap-2">
-                                            <span className="text-sm text-slate-400 font-medium border-b border-dotted border-slate-500 cursor-help" title="This is an estimate assuming constant volume and price staying in range.">
-                                                Estimated Yield
-                                            </span>
-                                            <div className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-[#1e293b] border border-[#334155]">
-                                                <div className="w-2.5 h-2.5 text-emerald-400">
-                                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3" /><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5" /></svg>
+                                {/* Inputs */}
+                                <div className="space-y-3 overflow-y-auto custom-scrollbar flex-1 pr-1">
+                                    <div className="space-y-2.5">
+                                        {/* Amount A */}
+                                        <div className="bg-black/30 p-4 rounded-2xl border border-white/5 group focus-within:border-blue-500/30 transition-all">
+                                            <div className="flex justify-between items-center mb-2">
+                                                <div className="flex items-center gap-2">
+                                                    <div className="w-6 h-6 rounded-full bg-blue-500 shadow-lg shadow-blue-500/20"></div>
+                                                    <span className="text-xs text-white font-black">{tokenA}</span>
                                                 </div>
-                                                <span className="text-[10px] font-bold text-slate-300">24H</span>
-                                                <div className="w-2 h-2 text-slate-500">
-                                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9" /></svg>
-                                                </div>
+                                                <span className="text-[10px] text-slate-600 font-mono uppercase">Available: —</span>
                                             </div>
-                                        </div>
-                                        <div className="flex items-center gap-2">
-                                            <span className="font-mono text-emerald-400 font-bold text-lg">
-                                                {(() => {
-                                                    if (!minPrice || !maxPrice || currentPrice <= 0 || parseFloat(minPrice) >= parseFloat(maxPrice)) return '0.000%';
-
-                                                    const min = parseFloat(minPrice);
-                                                    const max = parseFloat(maxPrice);
-                                                    const rangeDelta = (max - min) / currentPrice;
-
-                                                    if (rangeDelta === 0) return '0.000%';
-
-                                                    // HEURISTIC MODEL:
-                                                    // Yield scales inversely with range width (concentration).
-                                                    // We use a reference point derived from pool performance (Base Yield at Reference Width).
-
-                                                    const BASE_YIELD_24H = 0.230; // 0.23% daily yield at +/- 10% range for a 0.30% pool
-                                                    const REFERENCE_RANGE_WIDTH = 0.20; // 20% width (+/- 10%)
-                                                    const REFERENCE_FEE_TIER = 0.30; // The fee tier the base yield is calibrated for
-
-                                                    // Fee Tier Scaling: Higher fees = Higher potential yield
-                                                    // e.g. 0.01% pool earns ~1/30th of a 0.30% pool (simplified)
-                                                    const feeTierFactor = feeTier / REFERENCE_FEE_TIER;
-
-                                                    // Formula: BaseYield * FeeFactor * (RefWidth / CurrentWidth)
-                                                    const yieldVal = BASE_YIELD_24H * feeTierFactor * (REFERENCE_RANGE_WIDTH / rangeDelta);
-
-                                                    return yieldVal.toFixed(3) + '%';
-                                                })()}
-                                            </span>
-                                        </div>
-                                    </div>
-
-                                    {/* Deposit Ratio Row */}
-                                    <div className="flex items-center justify-between px-4 py-3 hover:bg-[#1e293b]/20 transition-colors">
-                                        <span className="text-sm text-slate-400 font-medium">Deposit Ratio</span>
-                                        <div className="flex items-center gap-2">
-                                            <span className="inline-flex items-center px-2.5 py-1 rounded-lg bg-[#1e293b] text-cyan-400 font-bold text-sm ring-1 ring-cyan-500/20">
-                                                {ratioA.toFixed(0)}% {tokenA}
-                                            </span>
-                                            <span className="text-slate-500">/</span>
-                                            <span className="inline-flex items-center px-2.5 py-1 rounded-lg bg-[#1e293b] text-purple-400 font-bold text-sm ring-1 ring-purple-500/20">
-                                                {ratioB.toFixed(0)}% {tokenB}
-                                            </span>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* Range Status Footer */}
-                                {!isInRange && minPrice && maxPrice && (
-                                    <div className="px-4 py-3 bg-yellow-900/10 border-t border-yellow-500/20 flex items-center gap-2">
-                                        <AlertTriangle size={14} className="text-yellow-400" />
-                                        <span className="text-xs text-yellow-400 font-medium">Current price is outside your range</span>
-                                    </div>
-                                )}
-                            </div>
-
-                            {/* Inco Security Status */}
-                            {(encryptedAmountA || encryptedAmountB) && (
-                                <SecurityStatusBanner
-                                    isEncrypted={true}
-                                    tokenSymbol={tokenA}
-                                />
-                            )}
-
-                            {/* Deposit Amounts - Solid Panel */}
-                            <div className="bg-[#0a0e1a] rounded-xl overflow-hidden ring-1 ring-[#1e293b]">
-                                {/* Table Header */}
-                                <div className="px-4 py-3 bg-[#111827] border-b border-[#1e293b] flex items-center justify-between">
-                                    <div className="flex items-center gap-2">
-                                        <span className="w-2 h-2 rounded-full bg-purple-500"></span>
-                                        <span className="text-xs font-bold text-slate-300 uppercase tracking-widest">Deposit Amount</span>
-                                    </div>
-                                    {encryptedAmountA && (
-                                        <InlineSecurityIndicator isSecured={true} />
-                                    )}
-                                </div>
-
-                                {/* Token Inputs */}
-                                <div className="divide-y divide-[#1e293b]">
-                                    {/* Token A Input Row */}
-                                    <div className="p-4 hover:bg-[#1e293b]/20 transition-colors">
-                                        <div className="flex items-center justify-between">
                                             <input
                                                 type="number"
                                                 value={amountA}
                                                 onChange={(e) => handleAmountAChange(e.target.value)}
-                                                placeholder="0"
-                                                className="bg-transparent text-2xl font-bold text-white focus:outline-none w-full placeholder:text-slate-600"
+                                                placeholder="0.00"
+                                                className="bg-transparent text-2xl font-black text-white focus:outline-none w-full placeholder:text-slate-800"
                                             />
-                                            <div className="flex items-center gap-2 ml-2 px-3 py-1.5 bg-[#1e293b] rounded-lg ring-1 ring-purple-500/20">
-                                                <div className="w-6 h-6 rounded-full bg-gradient-to-br from-purple-400 to-blue-500 shadow-lg shadow-purple-500/20"></div>
-                                                <span className="font-bold text-white">{tokenA}</span>
+                                            <div className="flex justify-between items-center mt-1">
+                                                <span className="text-[10px] text-slate-500 font-mono">
+                                                    {amountA ? `≈ $${(parseFloat(amountA) * tokenAPriceUsd).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '$0.00'}
+                                                </span>
                                             </div>
-                                        </div>
-                                        <div className="text-xs mt-2 flex items-center justify-between">
-                                            <span className="text-slate-400 font-medium">${amountA ? (parseFloat(amountA) * (tokenAPriceUsd || currentPrice)).toFixed(2) : '0.00'}</span>
                                             {encryptedAmountA && (
-                                                <code className="text-emerald-400 bg-emerald-900/20 px-2 py-1 rounded-lg text-[10px] font-mono ring-1 ring-emerald-500/20">
-                                                    🔒 {formatEncryptedDisplay(encryptedAmountA.encrypted, 8)}
-                                                </code>
+                                                <div className="mt-2 text-[9px] text-emerald-400/80 font-mono bg-emerald-500/5 px-2 py-1 rounded border border-emerald-500/10">
+                                                    🔒 {formatEncryptedDisplay(encryptedAmountA.encrypted, 12)}
+                                                </div>
                                             )}
                                         </div>
-                                    </div>
 
-                                    {/* Token B Input Row */}
-                                    <div className="p-4 hover:bg-[#1e293b]/20 transition-colors">
-                                        <div className="flex items-center justify-between">
+                                        {/* Amount B */}
+                                        <div className="bg-black/30 p-4 rounded-2xl border border-white/5 group focus-within:border-purple-500/30 transition-all">
+                                            <div className="flex justify-between items-center mb-2">
+                                                <div className="flex items-center gap-2">
+                                                    <div className="w-6 h-6 rounded-full bg-purple-500 shadow-lg shadow-purple-500/20"></div>
+                                                    <span className="text-xs text-white font-black">{tokenB}</span>
+                                                </div>
+                                                <span className="text-[10px] text-slate-600 font-mono uppercase">Available: —</span>
+                                            </div>
                                             <input
                                                 type="number"
                                                 value={amountB}
                                                 onChange={(e) => handleAmountBChange(e.target.value)}
-                                                placeholder="0"
-                                                className="bg-transparent text-2xl font-bold text-white focus:outline-none w-full placeholder:text-slate-600"
+                                                placeholder="0.00"
+                                                className="bg-transparent text-2xl font-black text-white focus:outline-none w-full placeholder:text-slate-800"
                                             />
-                                            <div className="flex items-center gap-2 ml-2 px-3 py-1.5 bg-[#1e293b] rounded-lg ring-1 ring-emerald-500/20">
-                                                <div className="w-6 h-6 rounded-full bg-gradient-to-br from-emerald-400 to-green-500 shadow-lg shadow-emerald-500/20"></div>
-                                                <span className="font-bold text-white">{tokenB}</span>
+                                            <div className="flex justify-between items-center mt-1">
+                                                <span className="text-[10px] text-slate-500 font-mono">
+                                                    {amountB ? `≈ $${(parseFloat(amountB) * tokenBPriceUsd).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '$0.00'}
+                                                </span>
                                             </div>
-                                        </div>
-                                        <div className="text-xs mt-2 flex items-center justify-between">
-                                            <span className="text-slate-400 font-medium">${amountB ? (parseFloat(amountB) * (tokenBPriceUsd || 1)).toFixed(2) : '0.00'}</span>
                                             {encryptedAmountB && (
-                                                <code className="text-emerald-400 bg-emerald-900/20 px-2 py-1 rounded-lg text-[10px] font-mono ring-1 ring-emerald-500/20">
-                                                    🔒 {formatEncryptedDisplay(encryptedAmountB.encrypted, 8)}
-                                                </code>
+                                                <div className="mt-2 text-[9px] text-emerald-400/80 font-mono bg-emerald-500/5 px-2 py-1 rounded border border-emerald-500/10">
+                                                    🔒 {formatEncryptedDisplay(encryptedAmountB.encrypted, 12)}
+                                                </div>
                                             )}
                                         </div>
                                     </div>
                                 </div>
-                            </div>
 
-                            {/* Settings Row */}
-                            <div className="flex flex-col gap-2 pt-2">
-                                <div className="flex items-center justify-between">
-                                    <button
-                                        onClick={() => setViewMode('range')}
-                                        className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
-                                    >
-                                        <Settings size={14} />
-                                        Adjust Range
-                                    </button>
-                                    <div className="flex items-center gap-2">
-                                        {/* Dev Block Toggle */}
-                                        <button
-                                            onClick={() => {
-                                                const el = document.getElementById('dev-info-block');
-                                                if (el) el.classList.toggle('hidden');
-                                            }}
-                                            className="text-[10px] font-mono bg-purple-500/10 text-purple-400 border border-purple-500/20 px-1.5 py-0.5 rounded hover:bg-purple-500/20 transition-colors"
-                                        >
-                                            DEV
-                                        </button>
-                                        <span className="text-xs text-muted-foreground ml-1">Slippage:</span>
-                                        <span className="text-xs font-medium bg-muted/50 px-2 py-1 rounded">
-                                            {slippage}%
-                                        </span>
-                                    </div>
-                                </div>
-
-                                {/* Hidden Dev Info Block */}
-                                <div id="dev-info-block" className="hidden mt-2 p-3 bg-black/40 border border-purple-500/20 rounded-lg text-xs font-mono space-y-1">
-                                    <div className="flex justify-between text-muted-foreground">
-                                        <span>Pool Address:</span>
-                                        <span className="text-purple-300 truncate max-w-[120px]" title={poolAddress || ''}>{(poolAddress || '').substring(0, 8)}...</span>
-                                    </div>
-                                    <div className="flex justify-between text-muted-foreground">
-                                        <span>Current Tick:</span>
-                                        <span className="text-purple-300">
-                                            {liquidityData && liquidityData.length > 0 ? liquidityData[Math.floor(liquidityData.length / 2)]?.tick || 'Loading' : 'Wait'}
-                                        </span>
-                                    </div>
-                                    <div className="flex justify-between text-muted-foreground">
-                                        <span>Price Impact:</span>
-                                        <span className="text-emerald-400">~0.05%</span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Transaction Status */}
-                            {txStatus !== 'idle' && (
-                                <div className={`p-4 rounded-lg border ${txStatus === 'success'
-                                    ? 'bg-green-500/10 border-green-500/30'
-                                    : txStatus === 'error'
-                                        ? 'bg-red-500/10 border-red-500/30'
-                                        : 'bg-blue-500/10 border-blue-500/30'
-                                    }`}>
-                                    <div className="flex items-center gap-2">
-                                        {txStatus !== 'success' && txStatus !== 'error' && (
-                                            <Loader2 className="animate-spin" size={16} />
-                                        )}
-                                        <span className={`text-sm ${txStatus === 'success' ? 'text-green-400' : txStatus === 'error' ? 'text-red-400' : 'text-blue-400'}`}>
-                                            {getStatusMessage()}
-                                        </span>
-                                    </div>
-                                    {txSignature && (
-                                        <a
-                                            href={`https://solscan.io/tx/${txSignature}`}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="text-xs text-primary hover:underline mt-2 block"
-                                        >
-                                            View on Solscan →
-                                        </a>
+                                {/* CTA Section */}
+                                <div className="pt-2">
+                                    {txStatus !== 'idle' ? (
+                                        <div className={`p-4 rounded-2xl border mb-4 text-xs ${txStatus === 'success' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' : txStatus === 'error' ? 'bg-red-500/10 border-red-500/20 text-red-400' : 'bg-blue-500/10 border-blue-500/20 text-blue-400'}`}>
+                                            <div className="flex items-center gap-3">
+                                                {txStatus !== 'success' && txStatus !== 'error' && <Loader2 className="animate-spin" size={14} />}
+                                                <span className="font-bold">{getStatusMessage()}</span>
+                                            </div>
+                                            {txSignature && (
+                                                <a href={`https://solscan.io/tx/${txSignature}`} target="_blank" rel="noopener noreferrer" className="text-[10px] text-blue-400 hover:underline mt-2 inline-block">View Transaction →</a>
+                                            )}
+                                            {errorMessage && <p className="text-[10px] text-red-400 mt-2">{errorMessage}</p>}
+                                        </div>
+                                    ) : (
+                                        <div className="flex items-center gap-2 justify-center mb-4">
+                                            <Info size={10} className="text-slate-600" />
+                                            <span className="text-[9px] text-slate-600 font-black uppercase tracking-widest italic">Encrypted Payload via Inco Network</span>
+                                        </div>
                                     )}
-                                    {
-                                        errorMessage && (
-                                            <p className="text-xs text-red-400 mt-2">{errorMessage}</p>
-                                        )
-                                    }
-                                </div>
-                            )}
-
-                            {/* On-chain Transaction Notice */}
-                            <div className="text-xs text-muted-foreground">
-                                ⚡ Encrypted transaction executed on Solana. Gas fees paid in SOL.
-                            </div>
-
-                            {/* Create Position / Connect Wallet Button (Visual Update) */}
-                            {
-                                txStatus === 'success' ? (
-                                    <button
-                                        onClick={onClose}
-                                        className="w-full py-4 bg-secondary text-secondary-foreground font-bold rounded-xl hover:bg-secondary/80 transition-colors"
-                                    >
-                                        Close
-                                    </button>
-                                ) : (
                                     <button
                                         onClick={handleCreatePosition}
                                         disabled={isSubmitting}
-                                        className={`w-full py-4 font-bold rounded-xl transition-all shadow-lg flex items-center justify-center gap-2 disabled:opacity-50 ${!connected
-                                            ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-500 hover:to-indigo-500 shadow-blue-500/20' /* Highlighted Connect Wallet */
-                                            : 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-500 hover:to-indigo-500 shadow-blue-500/20'
-                                            }`}
+                                        className="w-full py-5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-black rounded-2xl hover:from-blue-500 hover:to-indigo-500 shadow-xl shadow-blue-500/20 transition-all disabled:opacity-50 text-[13px] uppercase tracking-[0.2em] transform active:scale-[0.98]"
                                     >
-                                        {isSubmitting && <Loader2 className="animate-spin" size={20} />}
-                                        {!connected ? 'Connect Wallet' : isSubmitting ? 'Creating...' : 'Create Position'}
+                                        {isSubmitting ? 'Securing Position...' : !connected ? 'Connect Wallet' : 'Deploy Position'}
                                     </button>
-                                )
-                            }
-                        </div>
-
-                        {/* Column 4: AI Insights */}
-                        {/* Column 4: AI Insights */}
-                        {/* Column 4: AI Insights */}
-                        {/* Column 4: AI Insights */}
-                        {/* Column 4: AI Insights */}
-                        {/* Column 4: AI Insights */}
-                        {/* Column 4: AI Insights */}
-                        <div className="w-full lg:w-[25%] p-4 bg-gradient-to-br from-blue-950/40 to-slate-950/40 backdrop-blur-md overflow-hidden">
-                            <MLInsightsPanel
-                                tokenA={tokenA}
-                                tokenB={tokenB}
-                                isOpen={isOpen}
-                                currentPriceA={
-                                    // If B is stable (e.g. USDC), then Pool Price (B per A) is the price of A in USD
-                                    (['USDC', 'USDT'].includes(tokenB) && currentPrice > 0)
-                                        ? currentPrice
-                                        : (tokenAPriceUsd || undefined)
-                                }
-                                currentPriceB={
-                                    // If A is stable (e.g. USDC), then Pool Price (B per A) is Price of A in B. 
-                                    // Implies Price of B in A = 1/Pool Price.
-                                    (['USDC', 'USDT'].includes(tokenA) && currentPrice > 0)
-                                        ? (1 / currentPrice)
-                                        : (tokenBPriceUsd || undefined)
-                                }
-                                onPredictedRangeChange={(lower, upper) => {
-                                    // ONLY auto-set if fields are empty (first load)
-                                    // This prevents overriding user input
-                                    if (minPrice === '' && maxPrice === '') {
-                                        setMinPrice(lower.toFixed(4));
-                                        setMaxPrice(upper.toFixed(4));
-                                    }
-                                }}
-                                onApplyPrediction={(lower, upper) => {
-                                    // Force update when user clicks "Use AI Prediction"
-                                    setMinPrice(lower.toFixed(4));
-                                    setMaxPrice(upper.toFixed(4));
-                                    setSelectedPreset('custom');
-                                }}
-                            />
-                        </div>
-                    </div>
-                ) : (
-                    /* Range View */
-                    <div className="p-4 space-y-4">
-                        {/* Position Range Header */}
-                        <div className="flex items-center justify-between">
-                            <span className="text-sm font-medium">Position Range</span>
-                            <span className="text-xs text-muted-foreground">
-                                USD per {tokenA}
-                            </span>
-                        </div>
-
-                        {/* Full/Custom Toggle with Centered Current Price */}
-                        <div className="flex items-center justify-between gap-4 bg-blue-600/5 backdrop-blur-md p-2 border border-blue-500/20 rounded-lg">
-                            <button
-                                onClick={() => {
-                                    setMinPrice('0');
-                                    setMaxPrice('999999');
-                                }}
-                                className={`flex-1 py-2 px-4 text-sm font-medium transition-all rounded-md ${minPrice === '0'
-                                    ? 'bg-blue-500/20 text-blue-200 border border-blue-500/30'
-                                    : 'text-slate-400 hover:text-white hover:bg-white/5'
-                                    }`}
-                            >
-                                Full Range
-                            </button>
-
-                            {/* Current Price Highlight */}
-                            <div className="flex flex-col items-center px-4 py-1 bg-black/20 rounded-md border border-purple-500/20 shadow-inner">
-                                <span className="text-[10px] text-purple-300 uppercase tracking-wider font-bold">Current Price</span>
-                                <span className="font-mono text-lg font-bold text-purple-400">
-                                    ${currentPrice.toFixed(4)}
-                                </span>
+                                </div>
                             </div>
 
-                            <button
-                                onClick={() => applyPreset('5%', currentPrice)}
-                                className={`flex-1 py-2 px-4 text-sm font-medium transition-all rounded-md ${minPrice !== '0'
-                                    ? 'bg-blue-500/20 text-blue-200 border border-blue-500/30'
-                                    : 'text-slate-400 hover:text-white hover:bg-white/5'
-                                    }`}
-                            >
-                                Custom
-                            </button>
-                        </div>
-
-                        {/* Visual Range Selector (Purple & Interactive) */}
-                        <div
-                            className="bg-gradient-to-br from-blue-600/5 to-indigo-600/5 backdrop-blur-md border border-blue-500/10 rounded-xl p-4 h-64 relative overflow-hidden select-none cursor-crosshair group shadow-inner"
-                            onMouseDown={(e) => {
-                                const rect = e.currentTarget.getBoundingClientRect();
-                                const x = e.clientX - rect.left;
-                                const pct = x / rect.width;
-                                const rangeWidth = currentPrice * 0.4;
-                                const startPrice = currentPrice - (rangeWidth / 2);
-                                const clickedPrice = startPrice + pct * rangeWidth;
-
-                                const min = parseFloat(minPrice) || 0;
-                                const max = parseFloat(maxPrice) || Infinity;
-
-                                // Reset to Custom if Full
-                                if (minPrice === '0') setSelectedPreset('custom');
-
-                                if (Math.abs(clickedPrice - min) < Math.abs(clickedPrice - max)) {
-                                    setMinPrice(clickedPrice.toFixed(4));
-                                } else {
-                                    setMaxPrice(clickedPrice.toFixed(4));
-                                }
-                            }}
+                            {/* Column 4: AI Insights (24%) */}
+                            <div className="w-full lg:w-[24%] p-4 flex flex-col min-h-0">
+                                <MLInsightsPanel
+                                    tokenA={tokenA}
+                                    tokenB={tokenB}
+                                    isOpen={isOpen}
+                                    currentPriceA={(['USDC', 'USDT'].includes(tokenB) && currentPrice > 0) ? currentPrice : (tokenAPriceUsd || undefined)}
+                                    currentPriceB={(['USDC', 'USDT'].includes(tokenA) && currentPrice > 0) ? (1 / currentPrice) : (tokenBPriceUsd || undefined)}
+                                    onPredictedRangeChange={(lower, upper) => {
+                                        if (minPrice === '' && maxPrice === '') {
+                                            setMinPrice(lower.toFixed(4));
+                                            setMaxPrice(upper.toFixed(4));
+                                        }
+                                    }}
+                                    onApplyPrediction={(lower, upper) => {
+                                        setMinPrice(lower.toFixed(4));
+                                        setMaxPrice(upper.toFixed(4));
+                                        setSelectedPreset('custom');
+                                    }}
+                                />
+                            </div>
+                        </motion.div>
+                    ) : (
+                        /* Range View */
+                        <motion.div
+                            key="range-view"
+                            initial={{ opacity: 0, scale: 0.98, y: 10 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 1.02, y: -10 }}
+                            transition={{ type: "spring", damping: 25, stiffness: 200 }}
+                            className="p-10 space-y-6 flex-1 bg-black/40"
                         >
-                            {priceLoading ? (
-                                <div className="flex items-center justify-center h-full">
-                                    <Loader2 className="animate-spin text-muted-foreground" size={24} />
+                            <div className="flex items-center justify-between">
+                                <div className="space-y-1">
+                                    <h4 className="text-2xl font-black text-white uppercase tracking-widest">Set Price Range</h4>
+                                    <p className="text-slate-500">Specify the boundaries for your liquidity deployment.</p>
                                 </div>
-                            ) : (!chartBars || chartBars.buckets.every(b => b === 0)) ? (
-                                <div className="flex flex-col items-center justify-center h-full text-muted-foreground/50">
-                                    <AlertTriangle size={24} className="mb-2 opacity-50" />
-                                    <span className="text-xs">No Liquidity Data</span>
+                                <div className="bg-blue-500/10 border border-blue-500/20 rounded-2xl px-8 py-3 flex flex-col items-center shadow-lg shadow-blue-500/5">
+                                    <span className="text-[11px] text-blue-400 font-black uppercase tracking-widest mb-1">Current {displayToken} Price</span>
+                                    <span className="text-3xl font-mono font-black text-white">${currentPrice.toFixed(4)}</span>
                                 </div>
-                            ) : (
-                                <div className="h-full flex items-end justify-between gap-[2px] px-8 relative pointer-events-none">
-                                    {/* Central Pivot Line */}
-                                    <div className="absolute top-0 bottom-0 left-1/2 w-[1px] bg-purple-500/20 z-0 border-l border-dashed border-purple-500/30"></div>
+                            </div>
 
-                                    {/* Pegged Pair Indicator */}
-                                    {chartBars?.isStatic && (
-                                        <div className="absolute top-2 right-2 z-10">
-                                            <span className="text-[9px] text-purple-400/60 bg-purple-500/10 px-2 py-0.5 rounded border border-purple-500/20">
-                                                Typical Distribution
-                                            </span>
-                                        </div>
-                                    )}
-
-                                    {Array.from({ length: 64 }).map((_, i) => {
-                                        const rangeWidth = currentPrice * 0.4;
-                                        const step = rangeWidth / 64;
-                                        const startPrice = currentPrice - (rangeWidth / 2);
-                                        const barStart = startPrice + i * step;
-                                        const barPrice = barStart + step / 2;
+                            {/* Visual Range Selector */}
+                            <div
+                                className="bg-[#050505] rounded-[2.5rem] border border-white/10 p-10 h-[420px] relative overflow-hidden group shadow-[inset_0_0_120px_rgba(0,0,0,1)] select-none cursor-crosshair"
+                                onMouseDown={(e) => {
+                                    const rect = e.currentTarget.getBoundingClientRect();
+                                    const handleMouseMove = (moveE: MouseEvent) => {
+                                        const x = moveE.clientX - rect.left;
+                                        const pct = Math.max(0, Math.min(1, x / rect.width));
+                                        const rangeW = currentPrice * 0.4;
+                                        const startP = currentPrice - (rangeW / 2);
+                                        const clickedP = startP + (pct * rangeW);
 
                                         const min = parseFloat(minPrice) || 0;
                                         const max = parseFloat(maxPrice) || Infinity;
 
-                                        let heightPct = 5; // Default low visibility (5%)
-
-                                        if (chartBars && chartBars.maxBucket > 0) {
-                                            const val = chartBars.buckets[i];
-                                            if (val > 0) {
-                                                if (chartBars.isStatic) {
-                                                    // Linear scaling for static/simulated bars
-                                                    heightPct = (val / chartBars.maxBucket) * 85 + 10;
-                                                } else {
-                                                    // Logarithmic Scaling for real liquidity: log(val) / log(max)
-                                                    // This makes smaller liquidity amounts much more visible
-                                                    const logVal = Math.log(val + 1);
-                                                    const logMax = Math.log(chartBars.maxBucket + 1);
-                                                    heightPct = (logVal / logMax) * 85 + 10; // Scale 10-95%
-                                                }
-                                            }
-                                        } else if (liquidityLoading) {
-                                            const dist = (barPrice - currentPrice) / (rangeWidth / 6);
-                                            heightPct = Math.exp(-(dist * dist)) * 20 + 10;
+                                        if (Math.abs(clickedP - min) < Math.abs(clickedP - max)) {
+                                            setMinPrice(clickedP.toFixed(4));
+                                        } else {
+                                            setMaxPrice(clickedP.toFixed(4));
                                         }
+                                        setSelectedPreset('custom');
+                                    };
 
-                                        const isInRange = barPrice >= min && barPrice <= max;
+                                    const handleMouseUp = () => {
+                                        window.removeEventListener('mousemove', handleMouseMove);
+                                        window.removeEventListener('mouseup', handleMouseUp);
+                                    };
 
-                                        return (
-                                            <div
-                                                key={i}
-                                                className={`flex-1 rounded-t-[1px] transition-all duration-300 ${isInRange ? 'bg-purple-500 shadow-[0_0_10px_#a855f7]' : 'bg-slate-800/50'
-                                                    }`}
-                                                style={{ height: `${heightPct}%` }}
-                                            />
-                                        );
-                                    })}
+                                    window.addEventListener('mousemove', handleMouseMove);
+                                    window.addEventListener('mouseup', handleMouseUp);
 
-                                    {/* Min Price Handle (Neon Purple) */}
-                                    {(parseFloat(minPrice) > currentPrice * 0.8 && parseFloat(minPrice) < currentPrice * 1.2) && (
+                                    // Initial click
+                                    handleMouseMove(e.nativeEvent as MouseEvent);
+                                }}
+                            >
+                                {/* Technical Grid Background */}
+                                <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: 'linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)', backgroundSize: '20px 20px' }} />
+
+                                {priceLoading ? (
+                                    <div className="flex items-center justify-center h-full">
+                                        <div className="relative">
+                                            <Loader2 className="animate-spin text-blue-500" size={40} />
+                                            <div className="absolute inset-0 blur-xl bg-blue-500/20 animate-pulse" />
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="h-full flex items-end justify-between gap-[3px] relative pointer-events-none px-6">
+                                        {/* LIVE PRICE - Neon Vertical Beam */}
+                                        <div className="absolute top-0 bottom-0 left-1/2 w-[2px] z-10">
+                                            <div className="h-full w-full bg-gradient-to-b from-transparent via-sky-500/50 to-transparent shadow-[0_0_20px_rgba(14,165,233,0.4)]" />
+                                            <div className="absolute top-0 left-1/2 -translate-x-1/2 whitespace-nowrap">
+                                                <div className="bg-sky-600 text-white text-[9px] font-black px-2 py-1 rounded-full shadow-[0_0_15px_rgba(2,132,199,0.6)] border border-sky-400/30 flex items-center gap-1.5 backdrop-blur-md">
+                                                    <div className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+                                                    MARKET PRICE
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {Array.from({ length: 72 }).map((_, i) => {
+                                            const rangeW = currentPrice * 0.4;
+                                            const barPrice = (currentPrice - (rangeW / 2)) + (i * rangeW / 72) + (rangeW / 144);
+                                            const min = parseFloat(minPrice) || 0;
+                                            const max = parseFloat(maxPrice) || Infinity;
+                                            let heightPct = 6;
+                                            if (chartBars && chartBars.maxBucket > 0) {
+                                                const val = chartBars.buckets[Math.floor(i * 64 / 72)];
+                                                if (val > 0) heightPct = (Math.log(val + 1) / Math.log(chartBars.maxBucket + 1)) * 80 + 10;
+                                            }
+                                            const isActive = barPrice >= min && barPrice <= max;
+                                            return (
+                                                <div
+                                                    key={i}
+                                                    className={`flex-1 rounded-t-full transition-all duration-500 ${isActive
+                                                        ? 'bg-gradient-to-t from-blue-900/40 via-blue-500 to-blue-400 shadow-[0_0_12px_rgba(59,130,246,0.3)]'
+                                                        : 'bg-white/5'
+                                                        }`}
+                                                    style={{
+                                                        height: `${heightPct}%`,
+                                                        opacity: isActive ? 1 : 0.3
+                                                    }}
+                                                />
+                                            );
+                                        })}
+
+                                        {/* Min Handle - Neon Cyan */}
                                         <div
-                                            className="absolute top-8 bottom-0 w-[2px] bg-purple-400 z-10 shadow-[0_0_20px_#d8b4fe] transition-all duration-300"
+                                            className="absolute top-0 bottom-0 w-[3px] z-30 transition-all duration-100 ease-out"
                                             style={{ left: `${((parseFloat(minPrice) - (currentPrice * 0.8)) / (currentPrice * 0.4)) * 100}%` }}
                                         >
-                                            <div className="absolute -top-10 -translate-x-1/2 bg-black/80 border border-purple-500/50 text-purple-300 text-[10px] font-bold px-2 py-1 rounded backdrop-blur-md flex flex-col items-center min-w-[60px]">
-                                                <span className="text-[8px] text-muted-foreground uppercase">MIN</span>
-                                                <span>{(parseFloat(minPrice)).toFixed(4)}</span>
+                                            <div className="h-full w-full bg-gradient-to-b from-transparent via-cyan-500 to-cyan-400 shadow-[0_0_20px_rgba(6,182,212,0.5)]" />
+                                            <div className="absolute top-12 left-1/2 -translate-x-1/2">
+                                                <div className="bg-cyan-500 text-black text-[10px] font-black px-3 py-1.5 rounded-xl shadow-[0_0_20px_rgba(6,182,212,0.4)] border border-cyan-400/50 flex flex-col items-center">
+                                                    <span>MIN</span>
+                                                    <div className="w-1 h-3 mt-1 bg-black/20 rounded-full" />
+                                                </div>
                                             </div>
-                                            <div className="absolute top-0 -translate-x-1/2 w-4 h-full group-hover:bg-purple-500/5 cursor-ew-resize pointer-events-auto flex justify-center">
-                                                <div className="w-[2px] h-full bg-purple-400"></div>
-                                            </div>
+                                            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 w-4 h-4 rounded-full bg-cyan-500 border-2 border-white shadow-[0_0_15px_rgba(6,182,212,0.8)]" />
                                         </div>
-                                    )}
 
-                                    {/* Max Price Handle (Neon Purple) */}
-                                    {(parseFloat(maxPrice) > currentPrice * 0.8 && parseFloat(maxPrice) < currentPrice * 1.2) && (
+                                        {/* Max Handle - Neon Indigo */}
                                         <div
-                                            className="absolute top-8 bottom-0 w-[2px] bg-purple-400 z-10 shadow-[0_0_20px_#d8b4fe] transition-all duration-300"
+                                            className="absolute top-0 bottom-0 w-[3px] z-30 transition-all duration-100 ease-out"
                                             style={{ left: `${((parseFloat(maxPrice) - (currentPrice * 0.8)) / (currentPrice * 0.4)) * 100}%` }}
                                         >
-                                            <div className="absolute -top-10 -translate-x-1/2 bg-black/80 border border-purple-500/50 text-purple-300 text-[10px] font-bold px-2 py-1 rounded backdrop-blur-md flex flex-col items-center min-w-[60px]">
-                                                <span className="text-[8px] text-muted-foreground uppercase">MAX</span>
-                                                <span>{(parseFloat(maxPrice)).toFixed(4)}</span>
+                                            <div className="h-full w-full bg-gradient-to-b from-transparent via-indigo-500 to-indigo-400 shadow-[0_0_20px_rgba(99,102,241,0.5)]" />
+                                            <div className="absolute top-12 left-1/2 -translate-x-1/2">
+                                                <div className="bg-indigo-500 text-white text-[10px] font-black px-3 py-1.5 rounded-xl shadow-[0_0_20px_rgba(99,102,241,0.4)] border border-indigo-400/50 flex flex-col items-center">
+                                                    <span>MAX</span>
+                                                    <div className="w-1 h-3 mt-1 bg-white/20 rounded-full" />
+                                                </div>
                                             </div>
-                                            <div className="absolute top-0 -translate-x-1/2 w-4 h-full group-hover:bg-purple-500/5 cursor-ew-resize pointer-events-auto flex justify-center">
-                                                <div className="w-[2px] h-full bg-purple-400"></div>
-                                            </div>
+                                            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 w-4 h-4 rounded-full bg-indigo-500 border-2 border-white shadow-[0_0_15px_rgba(99,102,241,0.8)]" />
                                         </div>
-                                    )}
-                                </div>
-                            )}
-                        </div>
-
-                        {/* Min/Max Price Inputs */}
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                                <label className="text-xs text-slate-400">Min Price</label>
-                                <div className="flex items-center bg-blue-600/5 backdrop-blur-md border border-blue-500/20 rounded-lg overflow-hidden group focus-within:border-purple-500/50 transition-colors">
-                                    <button
-                                        onClick={() => setMinPrice((parseFloat(minPrice) - 1).toFixed(4))}
-                                        className="p-3 text-slate-400 hover:text-white bg-blue-500/10 hover:bg-blue-500/20 transition-colors border-r border-blue-500/10"
-                                    >
-                                        <Minus size={16} />
-                                    </button>
-                                    <input
-                                        type="number"
-                                        value={minPrice}
-                                        onChange={(e) => {
-                                            setMinPrice(e.target.value);
-                                            setSelectedPreset('custom');
-                                        }}
-                                        className="flex-1 bg-transparent text-center font-mono text-sm text-white focus:outline-none"
-                                    />
-                                    <button
-                                        onClick={() => setMinPrice((parseFloat(minPrice) + 1).toFixed(4))}
-                                        className="p-3 text-slate-400 hover:text-white bg-blue-500/10 hover:bg-blue-500/20 transition-colors border-l border-blue-500/10"
-                                    >
-                                        <Plus size={16} />
-                                    </button>
-                                </div>
+                                    </div>
+                                )}
                             </div>
-                            <div className="space-y-2">
-                                <label className="text-xs text-slate-400">Max Price</label>
-                                <div className="flex items-center bg-blue-600/5 backdrop-blur-md border border-blue-500/20 rounded-lg overflow-hidden group focus-within:border-purple-500/50 transition-colors">
-                                    <button
-                                        onClick={() => setMaxPrice((parseFloat(maxPrice) - 1).toFixed(4))}
-                                        className="p-3 text-slate-400 hover:text-white bg-blue-500/10 hover:bg-blue-500/20 transition-colors border-r border-blue-500/10"
-                                    >
-                                        <Minus size={16} />
-                                    </button>
-                                    <input
-                                        type="number"
-                                        value={maxPrice}
-                                        onChange={(e) => {
-                                            setMaxPrice(e.target.value);
-                                            setSelectedPreset('custom');
-                                        }}
-                                        className="flex-1 bg-transparent text-center font-mono text-sm text-white focus:outline-none"
-                                    />
-                                    <button
-                                        onClick={() => setMaxPrice((parseFloat(maxPrice) + 1).toFixed(4))}
-                                        className="p-3 text-slate-400 hover:text-white bg-blue-500/10 hover:bg-blue-500/20 transition-colors border-l border-blue-500/10"
-                                    >
-                                        <Plus size={16} />
-                                    </button>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <label className="text-[9px] font-black text-slate-500 uppercase tracking-[0.2em] ml-2">Min Boundary</label>
+                                    <div className="flex items-center bg-black/40 border-2 border-white/5 rounded-2xl overflow-hidden focus-within:border-blue-500/50 transition-all shadow-xl">
+                                        <button onClick={() => setMinPrice((parseFloat(minPrice) - 0.1).toFixed(4))} className="p-3 text-slate-500 hover:text-white hover:bg-white/5 transition-colors"><Minus size={16} /></button>
+                                        <input
+                                            type="number"
+                                            value={minPrice}
+                                            onChange={(e) => { setMinPrice(e.target.value); setSelectedPreset('custom'); }}
+                                            className="flex-1 bg-transparent text-center font-mono text-lg font-black text-white focus:outline-none"
+                                        />
+                                        <button onClick={() => setMinPrice((parseFloat(minPrice) + 0.1).toFixed(4))} className="p-3 text-slate-500 hover:text-white hover:bg-white/5 transition-colors"><Plus size={16} /></button>
+                                    </div>
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-[9px] font-black text-slate-500 uppercase tracking-[0.2em] ml-2">Max Boundary</label>
+                                    <div className="flex items-center bg-black/40 border-2 border-white/5 rounded-2xl overflow-hidden focus-within:border-blue-500/50 transition-all shadow-xl">
+                                        <button onClick={() => setMaxPrice((parseFloat(maxPrice) - 0.1).toFixed(4))} className="p-3 text-slate-500 hover:text-white hover:bg-white/5 transition-colors"><Minus size={16} /></button>
+                                        <input
+                                            type="number"
+                                            value={maxPrice}
+                                            onChange={(e) => { setMaxPrice(e.target.value); setSelectedPreset('custom'); }}
+                                            className="flex-1 bg-transparent text-center font-mono text-lg font-black text-white focus:outline-none"
+                                        />
+                                        <button onClick={() => setMaxPrice((parseFloat(maxPrice) + 0.1).toFixed(4))} className="p-3 text-slate-500 hover:text-white hover:bg-white/5 transition-colors"><Plus size={16} /></button>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
 
-                        {/* Slippage */}
-                        <div className="flex items-center justify-between pt-2">
-                            <div className="w-8"></div>
-                            <div className="flex items-center gap-2">
-                                <span className="text-xs text-muted-foreground">Slippage:</span>
-                                <span className="text-xs font-medium bg-muted/50 px-2 py-1 rounded">
-                                    {slippage}%
-                                </span>
-                            </div>
-                        </div>
-
-                        {/* Confirm Button */}
-                        <button
-                            onClick={() => setViewMode('deposit')}
-                            className="w-full py-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold rounded-xl shadow-lg shadow-blue-500/20 transition-all flex items-center justify-center gap-2 transform active:scale-[0.99]"
-                        >
-                            Confirm Range
-                        </button>
-                    </div>
-                )}
-            </div>
-        </div >
+                            <button
+                                onClick={() => setViewMode('deposit')}
+                                className="w-full py-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-black rounded-2xl shadow-xl shadow-blue-500/20 transition-all flex items-center justify-center gap-2 transform active:scale-[0.99] uppercase tracking-widest text-sm"
+                            >
+                                <Activity size={18} />
+                                Apply Calculated Range
+                            </button>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+            </motion.div>
+        </div>,
+        document.body
     );
 };

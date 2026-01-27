@@ -54,9 +54,9 @@ export const PoolList = () => {
     }
 
     return (
-        <div className="bg-[#0a0e1a] border border-[#1e293b] rounded-2xl overflow-hidden shadow-2xl">
+        <div className="glass-panel rounded-2xl overflow-hidden">
             {/* Table Header Section */}
-            <div className="px-6 py-5 border-b border-[#1e293b] bg-gradient-to-r from-[#0a0e1a] to-[#111827]">
+            <div className="px-6 py-5 border-b border-white/10 bg-white/5">
                 <h2 className="text-xl font-bold text-white tracking-tight">Available Pools</h2>
                 <p className="text-sm text-slate-400 mt-1">Select a pool to create a new liquidity position</p>
             </div>
@@ -65,7 +65,7 @@ export const PoolList = () => {
                 <table className="w-full text-left border-collapse">
                     {/* Solid Table Header */}
                     <thead>
-                        <tr className="bg-[#111827] border-b-2 border-[#2563eb]/30">
+                        <tr className="bg-white/5 border-b-2 border-primary/20">
                             <th className="px-6 py-4 text-xs font-bold text-slate-300 uppercase tracking-widest">
                                 <div className="flex items-center gap-2">
                                     <span className="w-2 h-2 rounded-full bg-blue-500"></span>
@@ -89,7 +89,7 @@ export const PoolList = () => {
 
                     {/* Table Body with Solid Rows */}
                     <tbody>
-                        {pools.map((pool, index) => {
+                        {pools.map((pool) => {
                             const iconA = getTokenIcon(pool.tokenA);
                             const iconB = getTokenIcon(pool.tokenB);
 
@@ -97,11 +97,10 @@ export const PoolList = () => {
                                 <tr
                                     key={pool.address}
                                     className={`
-                                        border-b border-[#1e293b] 
-                                        hover:bg-[#1e293b]/50 
+                                        border-b border-white/5 
+                                        hover:bg-white/5 
                                         transition-all duration-200 
                                         group
-                                        ${index % 2 === 0 ? 'bg-[#0a0e1a]' : 'bg-[#0d1321]'}
                                     `}
                                 >
                                     {/* Pair Column */}

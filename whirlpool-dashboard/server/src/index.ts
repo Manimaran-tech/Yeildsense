@@ -1,5 +1,9 @@
 import express from "express";
 import cors from "cors";
+import helmet from "helmet";
+import rateLimit from "express-rate-limit";
+import morgan from "morgan";
+import validator from "validator";
 import dotenv from "dotenv";
 import { createServer } from "http";
 import { getPositionsLegacy, getPositionDetails } from "./handlers/getPositions.js";
@@ -13,6 +17,7 @@ import { collectFees } from "./handlers/collectFees.js";
 import { getMarketHistory } from "./handlers/getMarketHistory.js";
 import { getLiquidityDistribution } from "./handlers/getLiquidityDistribution.js";
 import { getYieldHistory } from "./handlers/getYieldHistory.js";
+import { createVaultPosition, withdrawVaultPosition, collectVaultProfits } from "./handlers/vaultHandler.js";
 import { initWebSocket, broadcast, broadcastToWallet, getConnectedClientsCount } from "./websocket.js";
 
 dotenv.config();
@@ -21,8 +26,50 @@ const app = express();
 const server = createServer(app);
 const port = process.env.PORT || 3001;
 
-app.use(cors());
-app.use(express.json());
+// --- Security Middleware ---
+
+// Use Helmet to set security headers (XSS, Clickjacking, CSP, etc.)
+app.use(helmet());
+
+// Logging with Morgan (Audit Trail)
+app.use(morgan(':method :url :status :res[content-length] - :response-time ms'));
+
+// CORS configuration (Restrict to trusted domains in production)
+app.use(cors({
+    origin: process.env.ALLOWED_ORIGINS?.split(',') || '*',
+    methods: ['GET', 'POST'],
+    allowedHeaders: ['Content-Type', 'Authorization']
+}));
+
+// Rate Limiting (Prevent Brute Force / DoS)
+const apiLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100, // Limit each IP to 100 requests per windowMs
+    message: "Too many requests from this IP, please try again after 15 minutes"
+});
+
+// Apply rate limiter to all API routes
+app.use("/api/", apiLimiter);
+
+app.use(express.json({ limit: '10kb' })); // Limit body size to prevent DoS
+
+// --- Business Logic Validation Middleware ---
+
+const validateWallet = (req: express.Request, res: express.Response, next: express.NextFunction) => {
+    const { wallet } = req.params;
+    if (wallet && (!validator.isAlphanumeric(wallet) || wallet.length < 32 || wallet.length > 44)) {
+        return res.status(400).json({ error: "Invalid Solana wallet address" });
+    }
+    next();
+};
+
+const validateMint = (req: express.Request, res: express.Response, next: express.NextFunction) => {
+    const { mint } = req.params;
+    if (mint && (!validator.isAlphanumeric(mint) || mint.length < 32 || mint.length > 44)) {
+        return res.status(400).json({ error: "Invalid NFT mint address" });
+    }
+    next();
+};
 
 // --- Routes ---
 
@@ -67,7 +114,7 @@ app.get("/api/pool/:address/yield", getYieldHistory);
  * Fetch all Whirlpool positions for a wallet
  * Query param ?sdk=new for New SDK, otherwise uses Legacy SDK
  */
-app.get("/api/positions/:wallet", async (req, res) => {
+app.get("/api/positions/:wallet", validateWallet, async (req, res) => {
     try {
         const { wallet } = req.params;
         const { sdk } = req.query;
@@ -87,7 +134,7 @@ app.get("/api/positions/:wallet", async (req, res) => {
 /**
  * Fetch detailed position info
  */
-app.get("/api/position/:mint", async (req, res) => {
+app.get("/api/position/:mint", validateMint, async (req, res) => {
     try {
         const { mint } = req.params;
         const details = await getPositionDetails(mint);
@@ -106,6 +153,9 @@ app.get("/api/position/:mint", async (req, res) => {
 app.get("/api/pool/:address", async (req, res) => {
     try {
         const { address } = req.params;
+        if (!validator.isAlphanumeric(address)) {
+            return res.status(400).json({ error: "Invalid pool address" });
+        }
         const info = await getPool(address);
         if (!info) {
             return res.status(404).json({ error: "Pool not found" });
@@ -182,6 +232,13 @@ app.post("/api/position/collect-fees", async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 });
+
+/**
+ * Vault Operations
+ */
+app.post("/api/vault/create-position", createVaultPosition);
+app.post("/api/vault/withdraw", withdrawVaultPosition);
+app.post("/api/vault/collect-profits", collectVaultProfits);
 
 // --- Server Start ---
 

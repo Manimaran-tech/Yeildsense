@@ -1,4 +1,4 @@
-const BACKEND_URL = 'https://yieldsense-backend-a8c2.onrender.com';
+const BACKEND_URL = 'http://localhost:3001';
 
 export interface PositionInfo {
     positionMint: string;
@@ -136,12 +136,66 @@ export const api = {
             throw new Error(`Failed to fetch yield history: ${response.statusText}`);
         }
         return response.json();
+    },
+
+    async vaultCreatePosition(params: {
+        wallet: string,
+        whirlpool: string,
+        encryptedAmountA: string,
+        encryptedAmountB: string,
+        amountA: string,
+        tickLower?: number,
+        tickUpper?: number,
+        priceLower?: string,
+        priceUpper?: string,
+        slippageBps?: number,
+        amountType?: number
+    }): Promise<TransactionResponse> {
+        const response = await fetch(`${BACKEND_URL}/api/vault/create-position`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(params)
+        });
+        return response.json();
+    },
+
+    async vaultWithdraw(params: {
+        wallet: string,
+        whirlpool: string,
+        positionMint: string,
+        liquidityAmount: string,
+        closePosition: boolean,
+        tokenMintA: string,
+        tokenMintB: string,
+        slippageBps?: number
+    }): Promise<TransactionResponse> {
+        const response = await fetch(`${BACKEND_URL}/api/vault/withdraw`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(params)
+        });
+        return response.json();
+    },
+
+    async vaultCollectProfits(params: {
+        wallet: string,
+        whirlpool: string,
+        positionMint: string,
+        tokenMintA: string,
+        tokenMintB: string
+    }): Promise<TransactionResponse> {
+        const response = await fetch(`${BACKEND_URL}/api/vault/collect-profits`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(params)
+        });
+        return response.json();
     }
 };
 
 // --- Trading API (separate backend on port 3002) ---
 
-const TRADING_API_URL = 'https://yieldsense-trading-api-a8c2.onrender.com';
+const TRADING_API_URL = 'http://localhost:3002';
 
 export interface SwapQuote {
     route: 'JUPITER' | 'ORCA';
@@ -201,7 +255,7 @@ export const tradingApi = {
 // ==========================
 // ML API CLIENT
 // ==========================
-const ML_API_URL = 'http://127.0.0.1:8000';
+const ML_API_URL = 'http://localhost:8000';
 
 export interface MLQuickAnalysis {
     success: boolean;

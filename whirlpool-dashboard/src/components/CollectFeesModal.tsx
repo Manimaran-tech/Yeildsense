@@ -49,11 +49,25 @@ export const CollectFeesModal: FC<CollectFeesModalProps> = ({
         setErrorMessage(null);
 
         try {
-            console.log("CollectFees: Building transaction for position mint:", positionMint);
+            console.log("CollectFees: Fetching pool info for:", positionAddress);
+            const positions = await api.getPositions(publicKey.toString());
+            const position = positions.find(p => p.positionAddress === positionAddress);
 
-            const response = await api.collectFees({
+            if (!position) throw new Error("Position not found");
+
+            const pool = await api.getPool(position.whirlpoolAddress);
+            if (!pool || !pool.tokenA || !pool.tokenB) {
+                throw new Error("Failed to fetch pool info");
+            }
+
+            console.log("CollectFees: Building vault transaction for position mint:", positionMint);
+
+            const response = await api.vaultCollectProfits({
                 wallet: publicKey.toString(),
-                positionMint: positionMint
+                whirlpool: position.whirlpoolAddress,
+                positionMint: positionMint,
+                tokenMintA: pool.tokenA.mint,
+                tokenMintB: pool.tokenB.mint
             });
 
             if (!response.success || !response.serializedTransaction) {

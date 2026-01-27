@@ -133,7 +133,7 @@ async def fetch_sanctum_lst_apy() -> Dict:
     Fetch LST APY data from Sanctum's unified API.
     Sanctum aggregates data for multiple LSTs including JupSOL, bSOL.
     """
-    # NOTE: Configured endpoints (ngrok/extra-api) are currently unreliable or require auth.
+    # NOTE: Configured endpoints (extra-api) are currently unreliable or require auth.
     # Returning None immediately for instant fallback to "Estimated" calculation
     # to prevent UI delays.
     return None

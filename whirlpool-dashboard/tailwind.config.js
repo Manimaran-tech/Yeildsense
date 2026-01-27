@@ -7,6 +7,7 @@ export default {
     theme: {
         extend: {
             colors: {
+                neon: "#00F0FF", // Lando Aesthetic
                 border: "hsl(var(--border))",
                 input: "hsl(var(--input))",
                 ring: "hsl(var(--ring))",
@@ -47,7 +48,8 @@ export default {
                 sm: "calc(var(--radius) - 4px)",
             },
             fontFamily: {
-                sans: ["Inter", "ui-sans-serif", "system-ui", "sans-serif"],
+                sans: ["Inter", "Space Grotesk", "ui-sans-serif", "system-ui", "sans-serif"],
+                heading: ["Orbitron", "Space Grotesk", "sans-serif"],
             },
         },
     },

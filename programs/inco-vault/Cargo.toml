@@ -1,0 +1,25 @@
+[package]
+name = "inco-vault"
+version = "0.1.0"
+description = "Privacy-preserving yield vault with Inco encryption and Whirlpool integration"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib", "lib"]
+name = "inco_vault"
+
+[features]
+no-entrypoint = []
+no-idl = []
+no-log-ix-name = []
+cpi = ["no-entrypoint"]
+default = []
+idl-build = ["anchor-lang/idl-build", "anchor-spl/idl-build"]
+
+[dependencies]
+anchor-lang = { version = "=0.32.1" }
+anchor-spl = { version = "=0.32.1" }
+
+[dev-dependencies]
+solana-program-test = "3.0.0"
+tokio = "1.0"

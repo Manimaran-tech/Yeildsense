@@ -165,8 +165,8 @@ export const PositionList = () => {
             </div>
 
             {positions.length === 0 ? (
-                <div className="bg-[#0a0e1a] border border-[#1e293b]/50 rounded-2xl p-12 text-center shadow-xl">
-                    <div className="w-16 h-16 bg-[#1e293b] rounded-full flex items-center justify-center mx-auto mb-4 text-slate-500">
+                <div className="glass-panel rounded-2xl p-12 text-center shadow-xl">
+                    <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-4 text-slate-500 ring-1 ring-white/10">
                         <TrendingUp size={32} />
                     </div>
                     <p className="text-slate-300 font-medium text-lg">No active positions found</p>
@@ -175,7 +175,7 @@ export const PositionList = () => {
             ) : (
                 <div className="grid grid-cols-1 gap-6">
                     {positions.map((pos) => (
-                        <div key={pos.address} className="bg-[#0a0e1a] border border-[#1e293b] rounded-2xl p-6 hover:shadow-2xl hover:border-blue-500/30 transition-all duration-300 group relative overflow-hidden">
+                        <div key={pos.address} className="glass-panel glass-panel-hover rounded-2xl p-6 transition-all duration-300 group relative overflow-hidden">
                             {/* Gradient Glow Effect on Hover */}
                             <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
 

@@ -47,7 +47,7 @@ export const PortfolioStats = () => {
     ];
 
     return (
-        <div className="bg-[#0a0e1a] border border-[#1e293b]/50 rounded-2xl p-6 space-y-4">
+        <div className="glass-panel rounded-2xl p-6 space-y-4">
             <h3 className="text-lg font-bold text-white flex items-center gap-2">
                 <Wallet className="text-blue-500" size={20} />
                 Portfolio Overview

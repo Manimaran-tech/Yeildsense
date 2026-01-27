@@ -20,5 +20,13 @@ export default defineConfig({
   server: {
     port: 3005,
     open: true,
+  },
+  build: {
+    minify: 'esbuild',
+    rollupOptions: {
+      output: {
+        // manualChunks removed to fix polyfill resolution issue
+      }
+    }
   }
 })

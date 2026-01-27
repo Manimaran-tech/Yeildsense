@@ -162,14 +162,25 @@ interface SecurityStatusBannerProps {
     isEncrypted: boolean;
     tokenSymbol: string;
     className?: string;
+    compact?: boolean;
 }
 
 export const SecurityStatusBanner: FC<SecurityStatusBannerProps> = ({
     isEncrypted,
     tokenSymbol,
-    className = ''
+    className = '',
+    compact = false
 }) => {
     if (!isEncrypted) return null;
+
+    if (compact) {
+        return (
+            <div className={`flex items-center gap-1.5 px-2 py-0.5 bg-emerald-500/10 border border-emerald-500/20 rounded text-[9px] text-emerald-400 ${className}`}>
+                <ShieldCheck size={10} />
+                <span className="font-bold">Secured</span>
+            </div>
+        );
+    }
 
     return (
         <div className={`

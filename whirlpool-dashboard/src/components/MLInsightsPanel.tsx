@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import type { FC } from 'react';
 import { Loader2, AlertCircle, Activity } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { mlApi, type MLQuickAnalysis } from '../api';
 import { mapPoolTokens, getRecommendationDisplay, getSignalDisplay, toMLToken } from '../utils/tokenMapping';
 
@@ -32,7 +33,7 @@ const SafetyGauge: FC<{ score: number }> = ({ score }) => {
     const zone = getZoneColor(score);
 
     return (
-        <div className="relative w-full max-w-[200px] mx-auto">
+        <div className="relative w-full max-w-[160px] mx-auto">
             {/* Gauge Background */}
             <svg viewBox="0 0 200 110" className="w-full">
                 {/* Background arc segments */}
@@ -103,7 +104,7 @@ const SafetyGauge: FC<{ score: number }> = ({ score }) => {
             {/* Zone Label */}
             <div className="text-center mt-1">
                 <span
-                    className="text-sm font-semibold px-3 py-1 rounded-full"
+                    className="text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full"
                     style={{ backgroundColor: `${zone.color}20`, color: zone.color }}
                 >
                     {zone.label}
@@ -120,12 +121,12 @@ const SignalBadge: FC<{ signal: string }> = ({ signal }) => {
     const display = getSignalDisplay(signal);
 
     return (
-        <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg ${signal === 'BUY' ? 'bg-green-500/20 border border-green-500/30' :
-            signal === 'HOLD' ? 'bg-yellow-500/20 border border-yellow-500/30' :
-                'bg-red-500/20 border border-red-500/30'
+        <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg ${signal === 'BUY' ? 'bg-green-500/10 border border-green-500/20 shadow-[0_0_15px_rgba(34,197,94,0.1)]' :
+            signal === 'HOLD' ? 'bg-yellow-500/10 border border-yellow-500/20' :
+                'bg-red-500/10 border border-red-500/20'
             }`}>
-            <span className={`text-2xl ${display.color}`}>{display.icon}</span>
-            <span className={`text-lg font-bold ${display.color}`}>{display.label}</span>
+            <span className={`text-xl ${display.color}`}>{display.icon}</span>
+            <span className={`text-[13px] font-black uppercase tracking-widest ${display.color}`}>{display.label}</span>
         </div>
     );
 };
@@ -143,31 +144,39 @@ const PriceRangeCard: FC<{
     const rangeWidth = ((upperBound - lowerBound) / currentPrice * 100).toFixed(1);
 
     return (
-        <div className="bg-[#1e293b] rounded-lg p-3 space-y-2">
+        <div className="bg-black/40 border border-white/5 rounded-xl p-3 space-y-2">
             <div className="flex items-center justify-between">
-                <span className="font-semibold text-sm">{symbol}</span>
-                <span className={`text-xs px-2 py-0.5 rounded ${safetyScore >= 75 ? 'bg-green-500/20 text-green-400' :
-                    safetyScore >= 50 ? 'bg-yellow-500/20 text-yellow-400' :
-                        'bg-red-500/20 text-red-400'
+                <span className="font-black text-[10px] uppercase text-slate-400 tracking-widest">{symbol}</span>
+                <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded uppercase tracking-tighter ${safetyScore >= 75 ? 'bg-green-500/10 text-green-400' :
+                    safetyScore >= 50 ? 'bg-yellow-500/10 text-yellow-400' :
+                        'bg-red-500/10 text-red-400'
                     }`}>
-                    {safetyScore.toFixed(0)} pts
+                    {safetyScore.toFixed(0)} SCORE
                 </span>
             </div>
-            <div className="text-xs text-muted-foreground">
-                Current: <span className="text-foreground font-mono">${currentPrice.toFixed(4)}</span>
+            <div className="text-[11px] text-slate-500 font-mono">
+                Price: <span className="text-white font-bold">${currentPrice.toFixed(4)}</span>
             </div>
-            <div className="flex items-center gap-2 text-xs">
-                <span className="text-red-400 font-mono">${lowerBound.toFixed(4)}</span>
-                <div className="flex-1 h-1.5 bg-gradient-to-r from-red-500 via-yellow-500 to-green-500 rounded-full relative">
+            <div className="flex items-center gap-2 text-[10px] font-mono">
+                <span className="text-red-400/80">${lowerBound.toFixed(4)}</span>
+                <div className="flex-1 h-1 bg-white/5 rounded-full relative overflow-hidden">
                     <div
-                        className="absolute w-2 h-2 bg-white rounded-full -top-0.5 shadow"
+                        className="absolute h-full bg-gradient-to-r from-red-500 via-yellow-500 to-green-500 rounded-full"
+                        style={{
+                            left: '0%',
+                            width: '100%',
+                            opacity: 0.3
+                        }}
+                    />
+                    <div
+                        className="absolute w-1 h-full bg-white z-10"
                         style={{ left: `${Math.min(100, Math.max(0, ((currentPrice - lowerBound) / (upperBound - lowerBound)) * 100))}%` }}
                     />
                 </div>
-                <span className="text-green-400 font-mono">${upperBound.toFixed(4)}</span>
+                <span className="text-green-400/80">${upperBound.toFixed(4)}</span>
             </div>
-            <div className="text-xs text-muted-foreground text-center">
-                Range: ±{rangeWidth}%
+            <div className="text-[9px] text-slate-500 text-center uppercase font-black tracking-widest">
+                Expected Volatility: ±{rangeWidth}%
             </div>
         </div>
     );
@@ -191,15 +200,11 @@ export const MLInsightsPanel: FC<MLInsightsPanelProps> = ({
     const [analysis, setAnalysis] = useState<MLQuickAnalysis | null>(null);
 
     // Track if we've already fetched for the current token pair
-    // This prevents repeated fetches when prices change slightly
     const fetchedForRef = useRef<string>('');
 
     // Check token support and ensure alphabetical ordering for ML API
     const tokenMapping = useMemo(() => {
         const mapping = mapPoolTokens(tokenA, tokenB);
-
-        // ML API expects tokens in alphabetical order
-        // If they're not, swap them
         if (mapping.mlTokenA && mapping.mlTokenB && mapping.mlTokenA > mapping.mlTokenB) {
             return {
                 mlTokenA: mapping.mlTokenB,
@@ -208,7 +213,6 @@ export const MLInsightsPanel: FC<MLInsightsPanelProps> = ({
                 swapped: true
             };
         }
-
         return { ...mapping, swapped: false };
     }, [tokenA, tokenB]);
 
@@ -224,16 +228,9 @@ export const MLInsightsPanel: FC<MLInsightsPanelProps> = ({
     useEffect(() => {
         if (!isOpen) return;
 
-        // Create a key for this fetch session
         const fetchKey = `${tokenA}-${tokenB}`;
+        if (fetchedForRef.current === fetchKey && analysis) return;
 
-        // Skip if we've already fetched for this token pair
-        if (fetchedForRef.current === fetchKey && analysis) {
-            console.log('MLInsightsPanel: Using cached analysis for', fetchKey);
-            return;
-        }
-
-        // Wait for at least one price to be available before fetching
         const hasPrices = currentPriceA !== undefined || currentPriceB !== undefined;
         if (!hasPrices) {
             setLoading(true);
@@ -244,7 +241,6 @@ export const MLInsightsPanel: FC<MLInsightsPanelProps> = ({
             setLoading(true);
             setError(null);
 
-            // First check if tokens are supported
             if (!tokenMapping.bothSupported) {
                 setError(`Tokens not fully supported. Available: SOL, JUP, JUPSOL, PENGU, USDT, USDC`);
                 setLoading(false);
@@ -252,11 +248,7 @@ export const MLInsightsPanel: FC<MLInsightsPanelProps> = ({
             }
 
             try {
-                // Check ML API health first
                 await mlApi.healthCheck();
-
-                // Get quick analysis with real-time prices
-                // Create a price map from ORIGINAL tokens to their prices
                 const originalMLTokenA = toMLToken(tokenA);
                 const originalMLTokenB = toMLToken(tokenB);
 
@@ -264,26 +256,17 @@ export const MLInsightsPanel: FC<MLInsightsPanelProps> = ({
                     throw new Error('Token mapping failed');
                 }
 
-                // Create price map for ML tokens based on ORIGINAL mapping
                 const mlPriceMap: Record<string, number | undefined> = {
                     [originalMLTokenA]: currentPriceA,
                     [originalMLTokenB]: currentPriceB
                 };
 
-                // Now get prices for the alphabetically ordered ML tokens
                 const priceForMLTokenA = mlPriceMap[tokenMapping.mlTokenA!];
                 const priceForMLTokenB = mlPriceMap[tokenMapping.mlTokenB!];
 
-                // Validation: ensure prices are valid numbers
                 if (typeof priceForMLTokenA !== 'number' || typeof priceForMLTokenB !== 'number') {
-                    throw new Error(`Price mapping error: ${tokenMapping.mlTokenA}=$${priceForMLTokenA}, ${tokenMapping.mlTokenB}=$${priceForMLTokenB}`);
+                    throw new Error(`Price mapping error`);
                 }
-
-                console.log(`MLInsightsPanel: Original tokens - [${tokenA}, ${tokenB}] with prices [$${currentPriceA}, $${currentPriceB}]`);
-                console.log(`MLInsightsPanel: Mapped to ML tokens - [${originalMLTokenA}, ${originalMLTokenB}]`);
-                console.log(`MLInsightsPanel: Alphabetically ordered - [${tokenMapping.mlTokenA}, ${tokenMapping.mlTokenB}]`);
-                console.log(`MLInsightsPanel: Final price map:`, mlPriceMap);
-                console.log(`MLInsightsPanel: Sending to API - ${tokenMapping.mlTokenA}: $${priceForMLTokenA}, ${tokenMapping.mlTokenB}: $${priceForMLTokenB}`);
 
                 const result = await mlApi.getQuickAnalysis(
                     tokenMapping.mlTokenA!,
@@ -293,58 +276,29 @@ export const MLInsightsPanel: FC<MLInsightsPanelProps> = ({
                 );
 
                 setAnalysis(result);
-
-                // Mark that we've successfully fetched for this token pair
                 fetchedForRef.current = `${tokenA}-${tokenB}`;
 
-                // Debug: Log ML API response to trace safety score mismatch
-                console.log('ML API Response:', {
-                    token_a: { symbol: result.token_a.symbol, safety_score: result.token_a.safety_score, price: result.token_a.current_price, range: `${result.token_a.lower_bound} - ${result.token_a.upper_bound}` },
-                    token_b: { symbol: result.token_b.symbol, safety_score: result.token_b.safety_score, price: result.token_b.current_price, range: `${result.token_b.lower_bound} - ${result.token_b.upper_bound}` },
-                    overall_safety_score: result.overall.safety_score
-                });
-
-                // Determine which token's range to use for yield farming
-                // Priority: Show the ALTCOIN (not SOL, not stablecoin)
-                // - SOL/PENGU → show PENGU (altcoin to yield farm)
-                // - JupSOL/SOL → show JupSOL (altcoin to yield farm)
-                // - SOL/USDC → show SOL (no altcoin, so show SOL not stablecoin)
                 const stablecoins = ['USDC', 'USDT'];
+
+                // Refined priority logic match CreatePositionPanel
+                let finalUseTokenA: boolean;
                 const isTokenAStable = stablecoins.includes(tokenA);
                 const isTokenBStable = stablecoins.includes(tokenB);
                 const isTokenASOL = tokenA === 'SOL';
                 const isTokenBSOL = tokenB === 'SOL';
 
-                let useTokenA: boolean;
+                if (isTokenAStable) finalUseTokenA = false;
+                else if (isTokenBStable) finalUseTokenA = true;
+                else if (isTokenASOL && !isTokenBSOL) finalUseTokenA = false;
+                else if (isTokenBSOL && !isTokenASOL) finalUseTokenA = true;
+                else finalUseTokenA = true;
 
-                if (isTokenAStable) {
-                    // TokenA is stablecoin → use tokenB (SOL or altcoin)
-                    useTokenA = false;
-                } else if (isTokenBStable) {
-                    // TokenB is stablecoin → use tokenA (SOL or altcoin)
-                    useTokenA = true;
-                } else if (isTokenASOL && !isTokenBSOL) {
-                    // SOL/Altcoin → use Altcoin (tokenB)
-                    useTokenA = false;
-                } else if (isTokenBSOL && !isTokenASOL) {
-                    // Altcoin/SOL → use Altcoin (tokenA)
-                    useTokenA = true;
-                } else {
-                    // Both are altcoins or both are SOL → use tokenA
-                    useTokenA = true;
-                }
-
-                // Correctly map API results (which might be swapped) back to Input Token A and Token B
                 const resultForInputA = tokenMapping.swapped ? result.token_b : result.token_a;
                 const resultForInputB = tokenMapping.swapped ? result.token_a : result.token_b;
-
-                const displayResult = useTokenA ? resultForInputA : resultForInputB;
+                const displayResult = finalUseTokenA ? resultForInputA : resultForInputB;
 
                 if (onPredictedRangeChange && displayResult) {
-                    onPredictedRangeChange(
-                        displayResult.lower_bound,
-                        displayResult.upper_bound
-                    );
+                    onPredictedRangeChange(displayResult.lower_bound, displayResult.upper_bound);
                 }
             } catch (err) {
                 console.error('ML Analysis error:', err);
@@ -355,142 +309,187 @@ export const MLInsightsPanel: FC<MLInsightsPanelProps> = ({
         };
 
         fetchAnalysis();
-    }, [isOpen, tokenMapping, onPredictedRangeChange, currentPriceA, currentPriceB, tokenA, tokenB]);
+    }, [isOpen, tokenMapping, onPredictedRangeChange, currentPriceA, currentPriceB, tokenA, tokenB, analysis]);
 
     if (!isOpen) return null;
 
-    // Loading state
     if (loading) {
         return (
-            <div className="bg-[#0a0e1a] border border-[#1e293b] rounded-xl p-4 space-y-4">
-                <div className="flex items-center justify-center py-8">
-                    <Loader2 className="animate-spin text-primary mr-2" size={24} />
-                    <span className="text-muted-foreground">Analyzing with AI...</span>
-                </div>
+            <div className="bg-black/40 border border-white/10 rounded-2xl p-6 flex flex-col items-center justify-center space-y-3">
+                <Loader2 className="animate-spin text-blue-500" size={24} />
+                <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Synthesizing Market Data...</span>
             </div>
         );
     }
 
-    // Error state
     if (error) {
         return (
-            <div className="bg-[#0a0e1a] border border-[#1e293b] rounded-xl p-4">
-                <div className="flex items-start gap-3 text-yellow-400">
-                    <AlertCircle size={20} className="shrink-0 mt-0.5" />
+            <div className="bg-black/40 border border-white/10 rounded-2xl p-4">
+                <div className="flex items-start gap-3 text-red-400">
+                    <AlertCircle size={16} className="shrink-0 mt-0.5" />
                     <div className="space-y-1">
-                        <p className="text-sm font-medium">ML Insights Unavailable</p>
-                        <p className="text-xs text-muted-foreground">{error}</p>
+                        <p className="text-[11px] font-black uppercase tracking-wider">AI Analysis Offline</p>
+                        <p className="text-[10px] text-slate-400 leading-tight">{error}</p>
                     </div>
                 </div>
             </div>
         );
     }
 
-    // No data
-    if (!analysis) {
-        return (
-            <div className="bg-[#0a0e1a] border border-[#1e293b] rounded-xl p-4">
-                <p className="text-sm text-muted-foreground text-center">No analysis available</p>
-            </div>
-        );
-    }
+    if (!analysis) return null;
 
     const { token_a, token_b, overall } = analysis;
     const recDisplay = getRecommendationDisplay(overall.recommendation);
 
+    // Correctly map API results (which might be swapped) back to Input Token A and Token B
+    const resultForInputA = tokenMapping.swapped ? token_b : token_a;
+    const resultForInputB = tokenMapping.swapped ? token_a : token_b;
+
     return (
-        <div className="bg-[#0a0e1a] border border-[#1e293b] rounded-xl p-4 space-y-4 shadow-xl">
-            {/* Header */}
-            <div className="flex items-center justify-between">
-                <h4 className="text-sm font-semibold flex items-center gap-2">
-                    <Activity size={16} className="text-primary" />
-                    AI Insights
-                </h4>
-                <span className="text-xs text-muted-foreground">7-day forecast</span>
-            </div>
-
-            {/* Safety Gauge */}
-            <SafetyGauge score={overall.safety_score} />
-
-            {/* Signal Badge */}
-            <div className="flex justify-center">
-                <SignalBadge signal={overall.signal} />
-            </div>
-
-            {/* Recommendation */}
-            <div className={`text-center p-3 rounded-lg ${recDisplay.bgColor} border border-current/10`}>
-                <p className={`text-sm font-medium ${recDisplay.color}`}>{recDisplay.label}</p>
-                <p className="text-xs text-muted-foreground mt-1">{overall.message}</p>
-            </div>
-
-            {/* Predicted Price Ranges */}
-            <div className="space-y-2">
-                <h5 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                    Predicted Ranges
-                </h5>
-                <PriceRangeCard
-                    symbol={token_a.symbol}
-                    currentPrice={token_a.current_price}
-                    lowerBound={token_a.lower_bound}
-                    upperBound={token_a.upper_bound}
-                    safetyScore={token_a.safety_score}
-                />
-                <PriceRangeCard
-                    symbol={token_b.symbol}
-                    currentPrice={token_b.current_price}
-                    lowerBound={token_b.lower_bound}
-                    upperBound={token_b.upper_bound}
-                    safetyScore={token_b.safety_score}
-                />
-            </div>
-
-            {/* Quick Stats */}
-            <div className="grid grid-cols-2 gap-2 text-xs">
-                <div className="bg-[#1e293b] rounded-lg p-2 text-center">
-                    <span className="text-muted-foreground">Token A Range</span>
-                    <p className="font-mono font-medium">±{token_a.range_width_pct?.toFixed(1) || '0'}%</p>
-                </div>
-                <div className="bg-[#1e293b] rounded-lg p-2 text-center">
-                    <span className="text-muted-foreground">Token B Range</span>
-                    <p className="font-mono font-medium">±{token_b.range_width_pct?.toFixed(1) || '0'}%</p>
-                </div>
-            </div>
-
-            {/* Use AI Prediction Button */}
-            {onApplyPrediction && (
-                <button
-                    onClick={() => {
-                        // Re-calculate which prediction to use (same logic as effect)
-                        const stablecoins = ['USDC', 'USDT'];
-                        const isTokenAStable = stablecoins.includes(tokenA);
-                        const isTokenBStable = stablecoins.includes(tokenB);
-                        const isTokenASOL = tokenA === 'SOL';
-                        const isTokenBSOL = tokenB === 'SOL';
-
-                        let useTokenA = true;
-                        if (isTokenAStable) useTokenA = false;
-                        else if (isTokenBStable) useTokenA = true;
-                        else if (isTokenASOL && !isTokenBSOL) useTokenA = false;
-                        else if (isTokenBSOL && !isTokenASOL) useTokenA = true;
-
-                        const resultForInputA = tokenMapping.swapped ? analysis.token_b : analysis.token_a;
-                        const resultForInputB = tokenMapping.swapped ? analysis.token_a : analysis.token_b;
-                        const targetPrediction = useTokenA ? resultForInputA : resultForInputB;
-
-                        if (targetPrediction) {
-                            onApplyPrediction(targetPrediction.lower_bound, targetPrediction.upper_bound);
-                        }
+        <div className="relative h-full flex flex-col overflow-hidden bg-[#030712]/90 backdrop-blur-2xl border border-white/5 rounded-3xl shadow-2xl group">
+            {/* Obsidian 3D Background Elements */}
+            <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                {/* 3D Wireframe Cube 1 */}
+                <motion.div
+                    className="absolute top-10 left-10 opacity-20"
+                    animate={{
+                        rotateX: [0, 360],
+                        rotateY: [0, 360],
+                        y: [0, 20, 0],
                     }}
-                    className="w-full py-2.5 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white rounded-lg font-bold text-sm shadow-lg shadow-indigo-500/20 transition-all flex items-center justify-center gap-2"
+                    transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
                 >
-                    <Activity size={16} />
-                    Use AI Prediction
-                </button>
-            )}
+                    <svg width="100" height="100" viewBox="0 0 100 100" fill="none">
+                        <path d="M30 30 L70 30 L70 70 L30 70 Z" stroke="#06b6d4" strokeWidth="0.5" />
+                        <path d="M40 40 L80 40 L80 80 L40 80 Z" stroke="#06b6d4" strokeWidth="0.5" />
+                        <path d="M30 30 L40 40 M70 30 L80 40 M70 70 L80 80 M30 70 L40 80" stroke="#06b6d4" strokeWidth="0.5" />
+                    </svg>
+                </motion.div>
 
-            {/* Footer */}
-            <div className="text-center text-xs text-muted-foreground pt-2 border-t border-[#1e293b]">
-                Powered by LSTM + FinBERT Sentiment
+                {/* 3D Wireframe Cube 2 */}
+                <motion.div
+                    className="absolute bottom-20 right-10 opacity-15"
+                    animate={{
+                        rotateX: [360, 0],
+                        rotateY: [0, 360],
+                        y: [0, -30, 0],
+                    }}
+                    transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
+                >
+                    <svg width="120" height="120" viewBox="0 0 100 100" fill="none">
+                        <path d="M20 50 L50 20 L80 50 L50 80 Z" stroke="#3b82f6" strokeWidth="0.5" />
+                        <path d="M20 50 L50 50 L80 50" stroke="#3b82f6" strokeWidth="0.2" strokeDasharray="2 2" />
+                        <path d="M50 20 L50 80" stroke="#3b82f6" strokeWidth="0.2" strokeDasharray="2 2" />
+                    </svg>
+                </motion.div>
+
+                {/* Dark Glows */}
+                <motion.div
+                    animate={{
+                        opacity: [0.1, 0.3, 0.1],
+                        scale: [1, 1.2, 1],
+                    }}
+                    transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+                    className="absolute -top-20 -right-20 w-80 h-80 bg-blue-900/40 rounded-full blur-[100px]"
+                />
+                <motion.div
+                    animate={{
+                        opacity: [0.1, 0.2, 0.1],
+                        scale: [1, 1.1, 1],
+                    }}
+                    transition={{ duration: 12, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+                    className="absolute -bottom-20 -left-20 w-96 h-96 bg-cyan-900/30 rounded-full blur-[120px]"
+                />
+            </div>
+
+            <div className="relative h-full flex flex-col p-5 space-y-4 overflow-y-auto custom-scrollbar">
+                {/* Header */}
+                <div className="flex items-center justify-between">
+                    <h4 className="text-[12px] font-black uppercase tracking-[0.2em] flex items-center gap-2 text-white">
+                        <Activity size={16} className="text-blue-400" />
+                        Market Insights
+                    </h4>
+                    <div className="flex items-center gap-1.5 bg-blue-500/20 px-3 py-1 rounded-full border border-blue-500/30">
+                        <span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse shadow-[0_0_8px_#60a5fa]"></span>
+                        <span className="text-[10px] text-blue-400 font-black uppercase tracking-widest">Live Analysis</span>
+                    </div>
+                </div>
+
+                {/* Safety Gauge */}
+                <div className="py-2">
+                    <SafetyGauge score={overall.safety_score} />
+                </div>
+
+                {/* Signal Badge */}
+                <div className="flex justify-center -mt-2">
+                    <SignalBadge signal={overall.signal} />
+                </div>
+
+                {/* Recommendation */}
+                <div className={`text-center p-3 rounded-2xl border ${recDisplay.bgColor} border-white/10 relative overflow-hidden group/card`}>
+                    <div className="absolute inset-0 bg-white/5 opacity-0 group-hover/card:opacity-100 transition-opacity" />
+                    <p className={`text-[12px] font-black uppercase tracking-widest ${recDisplay.color} relative z-10`}>{recDisplay.label}</p>
+                    <p className="text-[10px] text-slate-300 leading-relaxed mt-1 font-medium relative z-10">{overall.message}</p>
+                </div>
+
+                {/* Predicted Price Ranges */}
+                <div className="space-y-4 flex-1 min-h-0">
+                    <div className="flex items-center justify-between px-1">
+                        <h5 className="text-[9px] font-black text-slate-500 uppercase tracking-[0.15em]">
+                            Volatility Forecast
+                        </h5>
+                        <span className="text-[8px] text-slate-600 font-mono">7D HORIZON</span>
+                    </div>
+                    <div className="space-y-2">
+                        <PriceRangeCard
+                            symbol={resultForInputA.symbol}
+                            currentPrice={resultForInputA.current_price}
+                            lowerBound={resultForInputA.lower_bound}
+                            upperBound={resultForInputA.upper_bound}
+                            safetyScore={resultForInputA.safety_score}
+                        />
+                        <PriceRangeCard
+                            symbol={resultForInputB.symbol}
+                            currentPrice={resultForInputB.current_price}
+                            lowerBound={resultForInputB.lower_bound}
+                            upperBound={resultForInputB.upper_bound}
+                            safetyScore={resultForInputB.safety_score}
+                        />
+                    </div>
+                </div>
+
+                {/* Use AI Prediction Button */}
+                {onApplyPrediction && (
+                    <button
+                        onClick={() => {
+                            const stablecoins = ['USDC', 'USDT'];
+                            let useTokenA: boolean;
+                            const isTokenAStable = stablecoins.includes(tokenA);
+                            const isTokenBStable = stablecoins.includes(tokenB);
+                            const isTokenASOL = tokenA === 'SOL';
+                            const isTokenBSOL = tokenB === 'SOL';
+
+                            if (isTokenAStable) useTokenA = false;
+                            else if (isTokenBStable) useTokenA = true;
+                            else if (isTokenASOL && !isTokenBSOL) useTokenA = false;
+                            else if (isTokenBSOL && !isTokenASOL) useTokenA = true;
+                            else useTokenA = true;
+
+                            const displayResult = useTokenA ? resultForInputA : resultForInputB;
+                            if (displayResult) {
+                                onApplyPrediction(displayResult.lower_bound, displayResult.upper_bound);
+                            }
+                        }}
+                        className="w-full py-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white rounded-xl font-black text-[11px] uppercase tracking-widest shadow-xl shadow-blue-500/10 transition-all flex items-center justify-center gap-2 group"
+                    >
+                        <Activity size={14} className="group-hover:scale-110 transition-transform" />
+                        Optimize Range with AI
+                    </button>
+                )}
+
+                <div className="text-center text-[8px] text-slate-500 font-black uppercase tracking-widest pt-3 border-t border-white/5 relative z-10">
+                    YieldSense AI • Performance Engine v1.0
+                </div>
             </div>
         </div>
     );

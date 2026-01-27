@@ -4,7 +4,6 @@ import { X, Loader2, AlertTriangle, Minus } from 'lucide-react';
 import { useWallet, useConnection } from '@solana/wallet-adapter-react';
 import { api } from '../api';
 import { deserializeTransaction } from '../utils/transactions';
-import { encryptAmount, formatEncryptedDisplay, type EncryptedAmount } from '../services/incoService';
 import { SecurityStatusBanner } from './SecurityBadge';
 
 interface WithdrawModalProps {
@@ -23,9 +22,6 @@ export const WithdrawModal: FC<WithdrawModalProps> = ({ isOpen, onClose, positio
     const [txSignature, setTxSignature] = useState<string | null>(null);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
     const [withdrawnAmounts, setWithdrawnAmounts] = useState<{ tokenA: string; tokenB: string } | null>(null);
-
-    // Inco encryption state
-    const [encryptedWithdrawAmount, setEncryptedWithdrawAmount] = useState<EncryptedAmount | null>(null);
 
     if (!isOpen) return null;
 
@@ -48,22 +44,25 @@ export const WithdrawModal: FC<WithdrawModalProps> = ({ isOpen, onClose, positio
                 throw new Error("Position not found");
             }
 
+            // Fetch pool to get token mints
+            const pool = await api.getPool(position.whirlpoolAddress);
+            if (!pool || !pool.tokenA || !pool.tokenB) {
+                throw new Error("Failed to fetch pool info");
+            }
+
             const totalLiquidity = BigInt(position.liquidity);
             const liquidityToRemove = (totalLiquidity * BigInt(percentage)) / BigInt(100);
 
-            // Encrypt withdrawal amount with Inco SDK
-            setTxStatus('encrypting');
-            const encrypted = await encryptAmount(liquidityToRemove.toString());
-            setEncryptedWithdrawAmount(encrypted);
-            console.log("Withdraw: Amount encrypted:", encrypted.encrypted.substring(0, 20) + '...');
-
-            setTxStatus('building');
-
-            console.log("Withdraw: Requesting transaction from backend...");
-            const response = await api.withdraw({
+            console.log("Withdraw: Requesting vault withdrawal transaction...");
+            const response = await api.vaultWithdraw({
                 wallet: publicKey.toString(),
+                whirlpool: position.whirlpoolAddress,
                 positionMint: position.positionMint,
-                liquidity: liquidityToRemove.toString()
+                liquidityAmount: liquidityToRemove.toString(),
+                closePosition: percentage === 100,
+                tokenMintA: pool.tokenA.mint,
+                tokenMintB: pool.tokenB.mint,
+                slippageBps: 100 // 1% default
             });
 
             if (!response.success || !response.serializedTransaction) {
@@ -210,14 +209,6 @@ export const WithdrawModal: FC<WithdrawModalProps> = ({ isOpen, onClose, positio
                     {/* Inco Security Status */}
                     <div className="space-y-2">
                         <SecurityStatusBanner isEncrypted={true} tokenSymbol="liquidity" />
-                        {encryptedWithdrawAmount && (
-                            <div className="flex items-center gap-2 text-xs text-gray-400 p-2 bg-[#111827] rounded-lg">
-                                <span>🔒 Encrypted:</span>
-                                <code className="text-emerald-400 bg-emerald-900/50 px-2 py-1 rounded font-mono">
-                                    {formatEncryptedDisplay(encryptedWithdrawAmount.encrypted, 12)}
-                                </code>
-                            </div>
-                        )}
                     </div>
 
                     {/* Transaction Status */}

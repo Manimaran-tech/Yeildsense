@@ -4,18 +4,26 @@ YieldSense ML API - FastAPI Implementation
 Modern, high-performance API for ML-powered price predictions and safety analysis.
 """
 import uvicorn
-from fastapi import FastAPI, HTTPException, Body
+from fastapi import FastAPI, HTTPException, Body, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from typing import Optional, List, Dict, Any
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
 import numpy as np
 import os
 import sys
+import logging
 import warnings
 import requests
+import httpx
 import asyncio
 from contextlib import asynccontextmanager
+from fastapi.middleware.gzip import GZipMiddleware
+from fastapi.middleware.trustedhost import TrustedHostMiddleware
+from slowapi.middleware import SlowAPIMiddleware
 
 # Add src to path for imports
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
@@ -24,10 +32,12 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
 # CONSTANTS & CONFIG
 # -------------------------------------------------------------------------
 warnings.filterwarnings('ignore')
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
-SUPPORTED_TOKENS = ['sol', 'jupsol', 'pengu', 'usdt', 'usdc', 'jup']
+# Setup logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
+SUPPORTED_TOKENS = ['sol', 'jup', 'jupsol', 'pengu', 'usdc', 'usdt']
 TOKEN_ADDRESSES = {
     'sol': 'So11111111111111111111111111111111111111112',
     'jup': 'JUPyiwrYJFskUPiHa7hkeR8VUtAeFoSYbKedZNsDvCN',
@@ -43,8 +53,7 @@ CRYPTOPANIC_API_KEYS = [
     "62104f2088449001e9f291914c754be8e6971dfc",
     "28d8727e72fc53245dd1996fab56fe326bf40ccf"
 ]
-CRYPTOPANIC_KEY_INDEX = 0  # Current key index, rotates on failure
-
+CRYPTOPANIC_KEY_INDEX = 0
 
 # -------------------------------------------------------------------------
 # GLOBAL STATE
@@ -53,6 +62,7 @@ volatility_models = {}
 sentiment_tokenizer = None
 sentiment_model = None
 device = None
+limiter = Limiter(key_func=get_remote_address)
 
 # -------------------------------------------------------------------------
 # MODELS
@@ -82,7 +92,6 @@ def load_models():
     """Load all models on startup."""
     global volatility_models, sentiment_tokenizer, sentiment_model, device
     
-    # Import heavy ML libraries only when needed to verify import/env
     import tensorflow as tf
     import torch
     from transformers import AutoTokenizer, AutoModelForSequenceClassification
@@ -92,78 +101,58 @@ def load_models():
         model_path = f"models/volatility_{token}.keras"
         if os.path.exists(model_path):
             try:
-                # Load with compile=False for speed/safety if inference only
                 volatility_models[token] = tf.keras.models.load_model(model_path, compile=False)
                 print(f"  [OK] {token.upper()}: {model_path}")
             except Exception as e:
                 print(f"  [!!] {token.upper()}: Error loading - {e}")
-        else:
-            print(f"  [--] {token.upper()}: Not found at {model_path}")
     
-    print("\nLoading FinBERT Sentiment Model...")
     print("\nLoading FinBERT Sentiment Model...")
     model_path = "models/finbert_sentiment"
     
     try:
-        # Determine source
-        model_source = model_path
-        if os.path.exists(model_path):
-            # Check for LFS pointer
-            is_lfs = False
-            for fname in ['model.safetensors', 'pytorch_model.bin']:
-                fpath = os.path.join(model_path, fname)
-                if os.path.exists(fpath) and os.path.getsize(fpath) < 2000:
-                    is_lfs = True
-                    break
-            
-            if is_lfs:
-                print(f"  [..] Local cache is LFS pointer. Downloading from Hub...")
-                model_source = "ProsusAI/finbert"
-        else:
-            model_source = "ProsusAI/finbert"
-
-        try:
-            sentiment_tokenizer = AutoTokenizer.from_pretrained(model_source)
-            sentiment_model = AutoModelForSequenceClassification.from_pretrained(model_source)
-        except Exception as load_err:
-            print(f"  [!!] Failed to load from {model_source}: {load_err}")
-            if model_source != "ProsusAI/finbert":
-                print("  [..] Attempting fallback download from 'ProsusAI/finbert'...")
-                model_source = "ProsusAI/finbert"
-                sentiment_tokenizer = AutoTokenizer.from_pretrained(model_source)
-                sentiment_model = AutoModelForSequenceClassification.from_pretrained(model_source)
-            else:
-                raise load_err
-
+        model_source = model_path if os.path.exists(model_path) else "ProsusAI/finbert"
+        sentiment_tokenizer = AutoTokenizer.from_pretrained(model_source)
+        sentiment_model = AutoModelForSequenceClassification.from_pretrained(model_source)
         device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         sentiment_model.to(device)
         sentiment_model.eval()
         print(f"  [OK] FinBERT loaded from {model_source} on {device}")
-
     except Exception as e:
         print(f"  [!!] FinBERT: Error loading - {e}")
-        print("  [--] Running without sentiment analysis")
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Startup
-    print("\n" + "=" * 60)
-    print("  YIELDSENSE ML API SERVER (FastAPI)")
-    print("=" * 60)
     load_models()
     yield
-    # Shutdown
-    print("Shutting down...")
 
 app = FastAPI(title="YieldSense ML API", lifespan=lifespan)
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
+# Secure CORS configuration
+allowed_origins = os.getenv("ALLOWED_ORIGINS", "*").split(',')
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Allow all for development
-    allow_credentials=True,
+    allow_origins=allowed_origins,
+    allow_credentials=False if "*" in allowed_origins else True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Security & Performance Middleware
+app.add_middleware(GZipMiddleware, minimum_size=1000)
+app.add_middleware(TrustedHostMiddleware, allowed_hosts=["*"]) # Configure specific hosts in production
+app.add_middleware(SlowAPIMiddleware)
+
+@app.middleware("http")
+async def security_logging_middleware(request: Request, call_next):
+    logger.info(f"Request: {request.method} {request.url.path} from {request.client.host}")
+    response = await call_next(request)
+    return response
+
+# -------------------------------------------------------------------------
+# CALCULATORS
+# -------------------------------------------------------------------------
 
 def get_bounds_calculator():
     """Create a fresh bounds calculator on each call."""
@@ -175,8 +164,8 @@ def get_bounds_calculator():
         print(f"  [!!] BoundsCalculator error: {e}")
         return None
 
-def fetch_real_price(token: str) -> float:
-    """Fetch real-time price from DexScreener."""
+async def fetch_real_price(token: str) -> float:
+    """Fetch real-time price from DexScreener (Async)."""
     token = token.lower()
     try:
         address = TOKEN_ADDRESSES.get(token)
@@ -185,43 +174,47 @@ def fetch_real_price(token: str) -> float:
             search_queries.append(f"https://api.dexscreener.com/latest/dex/search?q={address}")
         search_queries.append(f"https://api.dexscreener.com/latest/dex/search?q={token.upper()}")
         
-        for query_url in search_queries:
-            response = requests.get(query_url, timeout=5)
-            if response.status_code == 200:
-                data = response.json()
-                pairs = data.get('pairs', [])
-                if pairs:
-                    solana_pairs = [p for p in pairs if p.get('chainId') == 'solana']
-                    if solana_pairs:
-                        solana_pairs.sort(key=lambda x: x.get('liquidity', {}).get('usd', 0), reverse=True)
-                        for pair in solana_pairs[:3]:
-                            base_token = pair.get('baseToken', {})
-                            quote_token = pair.get('quoteToken', {})
-                            
-                            if base_token.get('symbol', '').lower() == token or \
-                               base_token.get('address') == address:
-                                price = float(pair.get('priceUsd', 0))
-                                if price > 0:
-                                    print(f"  [+] Fetched {token} from DexScreener (base): ${price}")
-                                    return price
-                            elif quote_token.get('symbol', '').lower() == token or \
-                                 quote_token.get('address') == address:
-                                base_price_usd = float(pair.get('priceUsd', 0))
-                                base_price_native = float(pair.get('priceNative', 0))
-                                if base_price_usd > 0 and base_price_native > 0:
-                                    price = base_price_usd / base_price_native
-                                    print(f"  [+] Fetched {token} from DexScreener (quote): ${price}")
-                                    return price
+        async with httpx.AsyncClient(timeout=httpx.Timeout(5.0, connect=3.0)) as client:
+            for query_url in search_queries:
+                try:
+                    response = await client.get(query_url)
+                    if response.status_code == 200:
+                        data = response.json()
+                        pairs = data.get('pairs', [])
+                        if pairs:
+                            solana_pairs = [p for p in pairs if p.get('chainId') == 'solana']
+                            if solana_pairs:
+                                solana_pairs.sort(key=lambda x: x.get('liquidity', {}).get('usd', 0), reverse=True)
+                                for pair in solana_pairs[:3]:
+                                    base_token = pair.get('baseToken', {})
+                                    quote_token = pair.get('quoteToken', {})
+                                    
+                                    if base_token.get('symbol', '').lower() == token or \
+                                       base_token.get('address') == address:
+                                        price = float(pair.get('priceUsd', 0))
+                                        if price > 0:
+                                            print(f"  [+] Fetched {token} from DexScreener (base): ${price}")
+                                            return price
+                                    elif quote_token.get('symbol', '').lower() == token or \
+                                         quote_token.get('address') == address:
+                                        base_price_usd = float(pair.get('priceUsd', 0))
+                                        base_price_native = float(pair.get('priceNative', 0))
+                                        if base_price_usd > 0 and base_price_native > 0:
+                                            price = base_price_usd / base_price_native
+                                            print(f"  [+] Fetched {token} from DexScreener (quote): ${price}")
+                                            return price
+                except Exception as req_err:
+                    print(f"  [!] Request error for {query_url}: {req_err}")
+                    continue
+
     except Exception as e:
         print(f"  [!] DexScreener error for {token}: {e}")
     
     if token in ['usdc', 'usdt']:
         return 1.0
-    if token in ['usdc', 'usdt']:
-        return 1.0
     return 0.0
 
-def fetch_crypto_news(token: str) -> List[str]:
+async def fetch_crypto_news(token: str) -> List[str]:
     """
     Fetch recent news headlines from CryptoPanic (Developer V2 API).
     Uses multiple API keys with automatic fallback on rate limit.
@@ -246,94 +239,98 @@ def fetch_crypto_news(token: str) -> List[str]:
     
     # Try each API key until one works
     num_keys = len(CRYPTOPANIC_API_KEYS)
-    for attempt in range(num_keys):
-        current_key = CRYPTOPANIC_API_KEYS[CRYPTOPANIC_KEY_INDEX]
-        
-        # V2 Developer Endpoint
-        url = (
-            "https://cryptopanic.com/api/developer/v2/posts/"
-            f"?auth_token={current_key}"
-            f"&currencies={query_currency}"
-            "&kind=news"
-            "&public=true"
-        )
-        
-        try:
-            # User-Agent is critical
-            headers = {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-            }
+    
+    # Use a single client for retries if possible, or new one each time. 
+    # New one each time ensures fresh connection state.
+    async with httpx.AsyncClient(timeout=httpx.Timeout(5.0, connect=3.0)) as client:
+        for attempt in range(num_keys):
+            current_key = CRYPTOPANIC_API_KEYS[CRYPTOPANIC_KEY_INDEX]
             
-            print(f"  [>] Fetching news for {token_lower} ({query_currency}) with key #{CRYPTOPANIC_KEY_INDEX + 1}...")
-            response = requests.get(url, headers=headers, timeout=5)
+            # V2 Developer Endpoint
+            url = (
+                "https://cryptopanic.com/api/developer/v2/posts/"
+                f"?auth_token={current_key}"
+                f"&currencies={query_currency}"
+                "&kind=news"
+                "&public=true"
+            )
             
-            # Rate limit or auth error - rotate to next key
-            if response.status_code in [401, 403, 429]:
-                print(f"  [!] Key #{CRYPTOPANIC_KEY_INDEX + 1} failed (status {response.status_code}). Trying next key...")
+            try:
+                # User-Agent is critical
+                headers = {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+                }
+                
+                print(f"  [>] Fetching news for {token_lower} ({query_currency}) with key #{CRYPTOPANIC_KEY_INDEX + 1}...")
+                response = await client.get(url, headers=headers)
+                
+                # Rate limit or auth error - rotate to next key
+                if response.status_code in [401, 403, 429]:
+                    print(f"  [!] Key #{CRYPTOPANIC_KEY_INDEX + 1} failed (status {response.status_code}). Trying next key...")
+                    CRYPTOPANIC_KEY_INDEX = (CRYPTOPANIC_KEY_INDEX + 1) % num_keys
+                    continue
+                
+                if response.status_code == 200:
+                    data = response.json()
+                    results = data.get('results', [])
+                    
+                    # --- 24h (Soft) FILTERING LOGIC ---
+                    import datetime
+                    
+                    # Use UTC for strict comparison
+                    now = datetime.datetime.now(datetime.timezone.utc)
+                    cutoff_24h = now - datetime.timedelta(hours=24)
+                    cutoff_72h = now - datetime.timedelta(hours=72)
+                    
+                    fresh_headlines = []
+                    older_headlines = []
+                    
+                    for post in results:
+                        title = post.get('title')
+                        pub_str = post.get('published_at') # e.g. "2026-01-06T16:40:00Z"
+                        
+                        if not title or not pub_str:
+                            continue
+                            
+                        try:
+                            # Clean 'Z' for ISO compatible parsing if needed
+                            if pub_str.endswith('Z'):
+                                pub_str = pub_str[:-1] + '+00:00'
+                                
+                            pub_date = datetime.datetime.fromisoformat(pub_str)
+                            
+                            if pub_date >= cutoff_24h:
+                                fresh_headlines.append(title)
+                            elif pub_date >= cutoff_72h:
+                                older_headlines.append(title)
+                        except Exception as parse_err:
+                            print(f"  [!] Date parsing failed for '{pub_str}': {parse_err}")
+                            continue
+
+                    # STRATEGY: Prefer Fresh > Then Older > Then Raw Fallback
+                    if fresh_headlines:
+                        print(f"  [+] News for {token_lower}: Found {len(fresh_headlines)} FRESH headlines (<24h).")
+                        return fresh_headlines
+                    elif older_headlines:
+                        print(f"  [~] News for {token_lower}: No fresh news. Returning {len(older_headlines)} OLDER headlines (<72h).")
+                        return older_headlines
+                    else:
+                        # Fallback: Just give the top 5 raw results if we have them
+                        print(f"  [-] News for {token_lower}: No recent news. Returning top 5 raw posts as fallback.")
+                        raw_headlines = [p['title'] for p in results[:5] if p.get('title')]
+                        return raw_headlines
+                else:
+                    # Suppress verbose HTML errors
+                    if "<html" in response.text[:50].lower():
+                        print(f"  [!] News API unavailable (Status {response.status_code}) - likely network blocked.")
+                    else:
+                        print(f"  [!] CryptoPanic API Error {response.status_code}: {response.text[:100]}")
+                    return []
+            except Exception as e:
+                print(f"  [!] News fetch error for {token_lower}: {e}")
+                # Rotate to next key on exception too
                 CRYPTOPANIC_KEY_INDEX = (CRYPTOPANIC_KEY_INDEX + 1) % num_keys
                 continue
-            
-            if response.status_code == 200:
-                data = response.json()
-                results = data.get('results', [])
-                
-                # --- 24h (Soft) FILTERING LOGIC ---
-                import datetime
-                
-                # Use UTC for strict comparison
-                now = datetime.datetime.now(datetime.timezone.utc)
-                cutoff_24h = now - datetime.timedelta(hours=24)
-                cutoff_72h = now - datetime.timedelta(hours=72)
-                
-                fresh_headlines = []
-                older_headlines = []
-                
-                for post in results:
-                    title = post.get('title')
-                    pub_str = post.get('published_at') # e.g. "2026-01-06T16:40:00Z"
-                    
-                    if not title or not pub_str:
-                        continue
-                        
-                    try:
-                        # Clean 'Z' for ISO compatible parsing if needed
-                        if pub_str.endswith('Z'):
-                            pub_str = pub_str[:-1] + '+00:00'
-                            
-                        pub_date = datetime.datetime.fromisoformat(pub_str)
-                        
-                        if pub_date >= cutoff_24h:
-                            fresh_headlines.append(title)
-                        elif pub_date >= cutoff_72h:
-                            older_headlines.append(title)
-                    except Exception as parse_err:
-                        print(f"  [!] Date parsing failed for '{pub_str}': {parse_err}")
-                        continue
-
-                # STRATEGY: Prefer Fresh > Then Older > Then Raw Fallback
-                if fresh_headlines:
-                    print(f"  [+] News for {token_lower}: Found {len(fresh_headlines)} FRESH headlines (<24h).")
-                    return fresh_headlines
-                elif older_headlines:
-                    print(f"  [~] News for {token_lower}: No fresh news. Returning {len(older_headlines)} OLDER headlines (<72h).")
-                    return older_headlines
-                else:
-                    # Fallback: Just give the top 5 raw results if we have them
-                    print(f"  [-] News for {token_lower}: No recent news. Returning top 5 raw posts as fallback.")
-                    raw_headlines = [p['title'] for p in results[:5] if p.get('title')]
-                    return raw_headlines
-            else:
-                # Suppress verbose HTML errors
-                if "<html" in response.text[:50].lower():
-                    print(f"  [!] News API unavailable (Status {response.status_code}) - likely network blocked.")
-                else:
-                    print(f"  [!] CryptoPanic API Error {response.status_code}: {response.text[:100]}")
-                return []
-        except Exception as e:
-            print(f"  [!] News fetch error for {token_lower}: {e}")
-            # Rotate to next key on exception too
-            CRYPTOPANIC_KEY_INDEX = (CRYPTOPANIC_KEY_INDEX + 1) % num_keys
-            continue
     
     print(f"  [!] All {num_keys} API keys exhausted for {token_lower}.")
     return []
@@ -381,7 +378,8 @@ async def farming_tokens():
     }
 
 @app.post("/api/farming/quick-analysis")
-async def quick_analysis(req: QuickAnalysisRequest):
+@limiter.limit("10/minute")
+async def quick_analysis(request: Request, req: QuickAnalysisRequest):
     token_a = req.token_a.lower()
     token_b = req.token_b.lower()
     
@@ -394,16 +392,16 @@ async def quick_analysis(req: QuickAnalysisRequest):
     
     if calculator:
         # Fetch news for sentiment analysis
-        headlines_a = fetch_crypto_news(token_a)
-        headlines_b = fetch_crypto_news(token_b)
+        headlines_a = await fetch_crypto_news(token_a)
+        headlines_b = await fetch_crypto_news(token_b)
         
         # Calculate bounds with sentiment
         bounds_a = calculator.calculate_bounds(token=token_a, current_price=req.price_a, headlines=headlines_a)
         bounds_b = calculator.calculate_bounds(token=token_b, current_price=req.price_b, headlines=headlines_b)
     else:
         # Fallback
-        price_a = req.price_a if req.price_a is not None else fetch_real_price(token_a)
-        price_b = req.price_b if req.price_b is not None else fetch_real_price(token_b)
+        price_a = req.price_a if req.price_a is not None else await fetch_real_price(token_a)
+        price_b = req.price_b if req.price_b is not None else await fetch_real_price(token_b)
         
         if price_a == 0: price_a = 100.0
         if price_b == 0: price_b = 1.0
@@ -544,7 +542,7 @@ async def get_token_news(token: str):
     token = token.lower()
     
     # 1. Fetch News
-    headlines = fetch_crypto_news(token)
+    headlines = await fetch_crypto_news(token)
     
     if not headlines:
         return {

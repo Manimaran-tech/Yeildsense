@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import type { FC } from 'react';
-import { Newspaper, TrendingUp, TrendingDown, Minus, Loader2 } from 'lucide-react';
+import { TrendingUp, TrendingDown, Minus, Loader2, Activity } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { mlApi } from '../api';
 import { mapPoolTokens } from '../utils/tokenMapping';
 
@@ -97,47 +98,47 @@ export const TokenNewsPanel: FC<TokenNewsPanelProps> = ({ tokenA, tokenB, isOpen
     const renderNewsSection = (token: string, news: NewsData | null) => {
         if (!news) {
             return (
-                <div className="text-xs text-muted-foreground text-center py-2">
-                    No news available for {token}
+                <div className="text-xs text-muted-foreground text-center py-4 bg-white/5 rounded-xl border border-white/5">
+                    No active news feed for {token}
                 </div>
             );
         }
 
         return (
-            <div className="space-y-2">
+            <div className="space-y-3">
                 {/* Token Header with Trend */}
                 <div className="flex items-center justify-between">
-                    <span className="text-sm font-semibold">{token}</span>
-                    <span className={`text-xs px-2 py-0.5 rounded-full capitalize ${getTrendColor(news.trend)}`}>
+                    <span className="text-xs font-black uppercase tracking-widest text-white">{token} Market</span>
+                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider ${getTrendColor(news.trend)}`}>
                         {news.trend}
                     </span>
                 </div>
 
                 {/* Headlines */}
                 {news.headlines.length > 0 ? (
-                    <div className="space-y-1.5">
+                    <div className="space-y-2">
                         {news.headlines.slice(0, 3).map((item, idx) => (
                             <div
                                 key={idx}
-                                className="flex items-start gap-2 p-2 bg-muted/30 rounded-lg hover:bg-muted/50 transition-colors"
+                                className="flex items-start gap-2.5 p-2 bg-white/5 rounded-xl border border-white/5 hover:bg-white/10 transition-colors"
                             >
-                                <SentimentIcon sentiment={item.sentiment} />
-                                <p className="text-xs text-foreground/90 line-clamp-2 flex-1">
+                                <div className="mt-1 flex-shrink-0"><SentimentIcon sentiment={item.sentiment} /></div>
+                                <p className="text-xs text-slate-300 line-clamp-2 leading-relaxed flex-1">
                                     {item.headline}
                                 </p>
                             </div>
                         ))}
                     </div>
                 ) : (
-                    <div className="text-xs text-muted-foreground text-center py-2 bg-muted/20 rounded-lg">
-                        No recent headlines
+                    <div className="text-xs text-slate-500 text-center py-4 bg-white/5 rounded-xl italic">
+                        No recent market headlines
                     </div>
                 )}
 
                 {/* Sentiment Score */}
-                <div className="flex items-center justify-between text-xs text-muted-foreground pt-1 border-t border-[#1e293b]">
-                    <span>Sentiment Score</span>
-                    <span className={`font-mono ${news.net_sentiment > 0 ? 'text-green-400' : news.net_sentiment < 0 ? 'text-red-400' : 'text-yellow-400'}`}>
+                <div className="flex items-center justify-between text-xs text-slate-400 pt-2 border-t border-white/5">
+                    <span className="uppercase font-bold tracking-widest text-[9px]">Composite Sentiment</span>
+                    <span className={`font-mono font-bold ${news.net_sentiment > 0 ? 'text-emerald-400' : news.net_sentiment < 0 ? 'text-red-400' : 'text-yellow-400'}`}>
                         {news.net_sentiment > 0 ? '+' : ''}{(news.net_sentiment * 100).toFixed(1)}%
                     </span>
                 </div>
@@ -146,38 +147,100 @@ export const TokenNewsPanel: FC<TokenNewsPanelProps> = ({ tokenA, tokenB, isOpen
     };
 
     return (
-        <div className="h-full flex flex-col space-y-3">
-            {/* Header */}
-            <div className="flex items-center gap-2">
-                <Newspaper size={16} className="text-primary" />
-                <h4 className="text-sm font-semibold">Market News</h4>
+        <div className="relative h-full flex flex-col overflow-hidden bg-[#030712]/90 backdrop-blur-2xl border border-white/5 rounded-2xl shadow-xl group">
+            {/* Obsidian 3D Background Elements */}
+            <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                {/* 3D Wireframe Polyhedron 1 */}
+                <motion.div
+                    className="absolute top-20 right-10 opacity-20"
+                    animate={{
+                        rotateX: [0, 360],
+                        rotateZ: [0, 360],
+                        y: [0, -20, 0],
+                    }}
+                    transition={{ duration: 22, repeat: Infinity, ease: "linear" }}
+                >
+                    <svg width="80" height="80" viewBox="0 0 100 100" fill="none" className="filter drop-shadow-[0_0_8px_rgba(6,182,212,0.3)]">
+                        <path d="M50 10 L90 50 L50 90 L10 50 Z" stroke="#06b6d4" strokeWidth="0.5" />
+                        <path d="M50 10 L50 90 M10 50 L90 50" stroke="#06b6d4" strokeWidth="0.3" strokeDasharray="1 1" />
+                    </svg>
+                </motion.div>
+
+                {/* 3D Wireframe Polyhedron 2 */}
+                <motion.div
+                    className="absolute bottom-40 left-10 opacity-15"
+                    animate={{
+                        rotateY: [0, 360],
+                        rotateZ: [360, 0],
+                        y: [0, 30, 0],
+                    }}
+                    transition={{ duration: 28, repeat: Infinity, ease: "linear" }}
+                >
+                    <svg width="100" height="100" viewBox="0 0 100 100" fill="none">
+                        <circle cx="50" cy="50" r="40" stroke="#3b82f6" strokeWidth="0.2" strokeDasharray="4 4" />
+                        <ellipse cx="50" cy="50" rx="40" ry="15" stroke="#3b82f6" strokeWidth="0.5" />
+                        <ellipse cx="50" cy="50" rx="15" ry="40" stroke="#3b82f6" strokeWidth="0.5" />
+                    </svg>
+                </motion.div>
+
+                {/* Dark Glows */}
+                <motion.div
+                    animate={{
+                        opacity: [0.1, 0.2, 0.1],
+                    }}
+                    transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
+                    className="absolute -top-32 -left-20 w-80 h-80 bg-cyan-900/20 rounded-full blur-[100px]"
+                />
+                <motion.div
+                    animate={{
+                        opacity: [0.1, 0.25, 0.1],
+                    }}
+                    transition={{ duration: 15, repeat: Infinity, ease: "easeInOut", delay: 2 }}
+                    className="absolute -bottom-20 -right-20 w-96 h-96 bg-blue-900/20 rounded-full blur-[110px]"
+                />
             </div>
 
-            {loading ? (
-                <div className="flex-1 flex items-center justify-center">
-                    <Loader2 className="animate-spin text-primary" size={24} />
-                </div>
-            ) : error ? (
-                <div className="flex-1 flex items-center justify-center text-xs text-muted-foreground">
-                    {error}
-                </div>
-            ) : (
-                <div className="flex-1 space-y-4 overflow-y-auto">
-                    {/* Token A News */}
-                    <div className="bg-[#1e293b] rounded-xl p-3">
-                        {renderNewsSection(tokenA, newsA)}
+            <div className="relative h-full flex flex-col p-5 overflow-y-auto custom-scrollbar">
+                {/* Header */}
+                <div className="flex items-center justify-between mb-4 border-b border-white/5 pb-3">
+                    <div className="flex items-center gap-2">
+                        <Activity size={14} className="text-yellow-400" />
+                        <h4 className="text-[12px] font-black uppercase tracking-[0.15em] text-white">Market News</h4>
                     </div>
-
-                    {/* Token B News */}
-                    <div className="bg-[#1e293b] rounded-xl p-3">
-                        {renderNewsSection(tokenB, newsB)}
+                    <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-500/30">
+                        <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_#10b981] animate-pulse"></div>
+                        <span className="text-[10px] text-emerald-400 font-bold uppercase tracking-widest leading-none">Live</span>
                     </div>
                 </div>
-            )}
 
-            {/* Footer */}
-            <div className="text-center text-xs text-muted-foreground pt-2 border-t border-[#1e293b]">
-                Powered by FinBERT Sentiment
+                {loading ? (
+                    <div className="flex-1 flex items-center justify-center">
+                        <Loader2 className="animate-spin text-blue-400" size={32} />
+                    </div>
+                ) : error ? (
+                    <div className="flex-1 flex items-center justify-center text-xs text-red-400 bg-red-500/5 rounded-xl border border-red-500/10">
+                        {error}
+                    </div>
+                ) : (
+                    <div className="flex-1 space-y-4">
+                        {/* Token A News */}
+                        <div className="rounded-xl p-0.5">
+                            {renderNewsSection(tokenA, newsA)}
+                        </div>
+
+                        <div className="h-px bg-white/5 mx-2" />
+
+                        {/* Token B News */}
+                        <div className="rounded-xl p-0.5">
+                            {renderNewsSection(tokenB, newsB)}
+                        </div>
+                    </div>
+                )}
+
+                {/* Footer */}
+                <div className="text-center text-[8px] text-slate-500 font-black uppercase tracking-widest pt-3 border-t border-white/5 mt-auto relative z-10">
+                    Synthesis Engine Alpha v1.4
+                </div>
             </div>
         </div>
     );
