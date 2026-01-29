@@ -1,0 +1,1961 @@
+error[E0308]: mismatched types
+ --> src/auth/admin.rs:8:5
+  |
+8 |     pubkey!("tstYmkF9JHjZbSugJe1H3ygUTox1bqSxpn5QjxMwVrm"),
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ expected `Pubkey`, found `__Pubkey`
+  |
+  = note: this error originates in the macro `pubkey` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0308]: mismatched types
+ --> src/constants/nft.rs:5:29
+  |
+5 |     pub static ID: Pubkey = solana_program::pubkey!("3axbTs2z5GBy6usVbNVoqEgZMng3vZvMnAoX29BFfwhr");
+  |                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ expected `Pubkey`, found `__Pubkey`
+  |
+  = note: this error originates in the macro `solana_program::pubkey` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error[E0308]: arguments to this function are incorrect
+  --> src/instructions/reset_position_range.rs:92:9
+   |
+92 |         invoke(&ix, &account_infos)?;
+   |         ^^^^^^ --- expected `Instruction`, found a different `Instruction`
+   |
+   = note: `Instruction` and `Instruction` have similar names, but are actually distinct types
+note: `Instruction` is defined in crate `solana_instruction`
+  --> src/lib.rs:97:1
+note: `Instruction` is defined in crate `solana_instruction`
+  --> src/lib.rs:94:1
+   = note: perhaps two different versions of crate `solana_instruction` are being used?
+note: expected `&[AccountInfo<'_>]`, found `&[AccountInfo<'_>; 3]`
+  --> src/instructions/reset_position_range.rs:92:21
+   |
+92 |         invoke(&ix, &account_infos)?;
+   |                     ^^^^^^^^^^^^^^
+   = note: expected reference `&[solana_program::solana_account_info::AccountInfo<'_>]`
+              found reference `&[anchor_lang::prelude::AccountInfo<'_>; 3]`
+note: function defined here
+  --> src/program.rs:23:8
+
+error[E0277]: `?` couldn't convert the error to `anchor_lang::error::Error`
+  --> src/instructions/reset_position_range.rs:92:36
+   |
+60 | ) -> Result<()> {
+   |      ---------- expected `anchor_lang::error::Error` because of this
+...
+92 |         invoke(&ix, &account_infos)?;
+   |         ---------------------------^ the trait `From<solana_program::program_error::ProgramError>` is not implemented for `anchor_lang::error::Error`
+   |         |
+   |         this can't be annotated with `?` because it has type `Result<_, solana_program::program_error::ProgramError>`
+   |
+   = note: the question mark operation (`?`) implicitly performs a conversion on the error value using the `From` trait
+   = help: the following other types implement trait `From<T>`:
+             `anchor_lang::error::Error` implements `From<ProgramErrorWithOrigin>`
+             `anchor_lang::error::Error` implements `From<TryFromIntError>`
+             `anchor_lang::error::Error` implements `From<anchor_lang::error::AnchorError>`
+             `anchor_lang::error::Error` implements `From<anchor_lang::error::ErrorCode>`
+             `anchor_lang::error::Error` implements `From<anchor_lang::prelude::ProgramError>`
+             `anchor_lang::error::Error` implements `From<errors::ErrorCode>`
+             `anchor_lang::error::Error` implements `From<std::io::Error>`
+   = note: required for `std::result::Result<(), anchor_lang::error::Error>` to implement `FromResidual<std::result::Result<Infallible, solana_program::program_error::ProgramError>>`
+
+error[E0308]: arguments to this function are incorrect
+   --> src/manager/tick_array_manager.rs:133:5
+    |
+133 |     invoke(&instruction, &account_infos)?;
+    |     ^^^^^^ ------------ expected `Instruction`, found a different `Instruction`
+    |
+    = note: `Instruction` and `Instruction` have similar names, but are actually distinct types
+note: `Instruction` is defined in crate `solana_instruction`
+   --> src/lib.rs:97:1
+note: `Instruction` is defined in crate `solana_instruction`
+   --> src/lib.rs:94:1
+    = note: perhaps two different versions of crate `solana_instruction` are being used?
+note: expected `&[AccountInfo<'_>]`, found `&[AccountInfo<'_>; 3]`
+   --> src/manager/tick_array_manager.rs:133:26
+    |
+133 |     invoke(&instruction, &account_infos)?;
+    |                          ^^^^^^^^^^^^^^
+    = note: expected reference `&[solana_program::solana_account_info::AccountInfo<'_>]`
+               found reference `&[anchor_lang::prelude::AccountInfo<'_>; 3]`
+note: function defined here
+   --> src/program.rs:23:8
+
+error[E0277]: `?` couldn't convert the error to `anchor_lang::error::Error`
+   --> src/manager/tick_array_manager.rs:133:41
+    |
+123 | ) -> Result<()> {
+    |      ---------- expected `anchor_lang::error::Error` because of this
+...
+133 |     invoke(&instruction, &account_infos)?;
+    |     ------------------------------------^ the trait `From<solana_program::program_error::ProgramError>` is not implemented for `anchor_lang::error::Error`
+    |     |
+    |     this can't be annotated with `?` because it has type `Result<_, solana_program::program_error::ProgramError>`
+    |
+    = note: the question mark operation (`?`) implicitly performs a conversion on the error value using the `From` trait
+    = help: the following other types implement trait `From<T>`:
+              `anchor_lang::error::Error` implements `From<ProgramErrorWithOrigin>`
+              `anchor_lang::error::Error` implements `From<TryFromIntError>`
+              `anchor_lang::error::Error` implements `From<anchor_lang::error::AnchorError>`
+              `anchor_lang::error::Error` implements `From<anchor_lang::error::ErrorCode>`
+              `anchor_lang::error::Error` implements `From<anchor_lang::prelude::ProgramError>`
+              `anchor_lang::error::Error` implements `From<errors::ErrorCode>`
+              `anchor_lang::error::Error` implements `From<std::io::Error>`
+    = note: required for `std::result::Result<(), anchor_lang::error::Error>` to implement `FromResidual<std::result::Result<Infallible, solana_program::program_error::ProgramError>>`
+
+warning: use of deprecated method `anchor_lang::prelude::AccountInfo::<'a>::realloc`: Use AccountInfo::resize() instead
+   --> src/manager/tick_array_manager.rs:206:29
+    |
+206 |     tick_array_account_info.realloc(required_size, true)?;
+    |                             ^^^^^^^
+    |
+    = note: `#[warn(deprecated)]` on by default
+
+warning: use of deprecated method `anchor_lang::prelude::AccountInfo::<'a>::realloc`: Use AccountInfo::resize() instead
+   --> src/manager/tick_array_manager.rs:213:29
+    |
+213 |     tick_array_account_info.realloc(required_size, true)?;
+    |                             ^^^^^^^
+
+error[E0308]: mismatched types
+  --> src/util/account.rs:26:15
+   |
+26 |             &[system_program.clone(), new_account.clone(), funder.clone()],
+   |               ^^^^^^^^^^^^^^^^^^^^^^ expected `AccountInfo<'_>`, found `AccountInfo<'info>`
+   |
+   = note: `AccountInfo<'info>` and `AccountInfo<'_>` have similar names, but are actually distinct types
+note: `AccountInfo<'info>` is defined in crate `solana_account_info`
+  --> src/lib.rs:22:1
+note: `AccountInfo<'_>` is defined in crate `solana_account_info`
+  --> src/lib.rs:22:1
+   = note: perhaps two different versions of crate `solana_account_info` are being used?
+
+error[E0308]: mismatched types
+  --> src/util/account.rs:25:13
+   |
+24 |         invoke_signed(
+   |         ------------- arguments to this function are incorrect
+25 |             &system_instruction::transfer(new_account.key, funder.key, current_lamports),
+   |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ expected `Instruction`, found a different `Instruction`
+   |
+   = note: `Instruction` and `Instruction` have similar names, but are actually distinct types
+note: `Instruction` is defined in crate `solana_instruction`
+  --> src/lib.rs:97:1
+note: `Instruction` is defined in crate `solana_instruction`
+  --> src/lib.rs:94:1
+   = note: perhaps two different versions of crate `solana_instruction` are being used?
+note: function defined here
+  --> src/program.rs:48:8
+
+error[E0277]: `?` couldn't convert the error to `anchor_lang::error::Error`
+  --> src/util/account.rs:28:10
+   |
+13 |   ) -> Result<()> {
+   |        ---------- expected `anchor_lang::error::Error` because of this
+...
+24 | /         invoke_signed(
+25 | |             &system_instruction::transfer(new_account.key, funder.key, current_lamports),
+26 | |             &[system_program.clone(), new_account.clone(), funder.clone()],
+27 | |             signers_seeds,
+28 | |         )?;
+   | |         -^ the trait `From<solana_program::program_error::ProgramError>` is not implemented for `anchor_lang::error::Error`
+   | |_________|
+   |           this can't be annotated with `?` because it has type `Result<_, solana_program::program_error::ProgramError>`
+   |
+   = note: the question mark operation (`?`) implicitly performs a conversion on the error value using the `From` trait
+   = help: the following other types implement trait `From<T>`:
+             `anchor_lang::error::Error` implements `From<ProgramErrorWithOrigin>`
+             `anchor_lang::error::Error` implements `From<TryFromIntError>`
+             `anchor_lang::error::Error` implements `From<anchor_lang::error::AnchorError>`
+             `anchor_lang::error::Error` implements `From<anchor_lang::error::ErrorCode>`
+             `anchor_lang::error::Error` implements `From<anchor_lang::prelude::ProgramError>`
+             `anchor_lang::error::Error` implements `From<errors::ErrorCode>`
+             `anchor_lang::error::Error` implements `From<std::io::Error>`
+   = note: required for `std::result::Result<(), anchor_lang::error::Error>` to implement `FromResidual<std::result::Result<Infallible, solana_program::program_error::ProgramError>>`
+
+error[E0308]: mismatched types
+  --> src/util/account.rs:44:11
+   |
+44 |         &[system_program, funder, new_account],
+   |           ^^^^^^^^^^^^^^ expected `AccountInfo<'_>`, found `AccountInfo<'info>`
+   |
+   = note: `AccountInfo<'info>` and `AccountInfo<'_>` have similar names, but are actually distinct types
+note: `AccountInfo<'info>` is defined in crate `solana_account_info`
+  --> src/lib.rs:22:1
+note: `AccountInfo<'_>` is defined in crate `solana_account_info`
+  --> src/lib.rs:22:1
+   = note: perhaps two different versions of crate `solana_account_info` are being used?
+
+error[E0308]: mismatched types
+  --> src/util/account.rs:37:9
+   |
+36 |       invoke_signed(
+   |       ------------- arguments to this function are incorrect
+37 | /         &system_instruction::create_account(
+38 | |             funder.key,
+39 | |             new_account.key,
+40 | |             next_lamports,
+41 | |             space,
+42 | |             owner_program,
+43 | |         ),
+   | |_________^ expected `Instruction`, found a different `Instruction`
+   |
+   = note: `Instruction` and `Instruction` have similar names, but are actually distinct types
+note: `Instruction` is defined in crate `solana_instruction`
+  --> src/lib.rs:97:1
+note: `Instruction` is defined in crate `solana_instruction`
+  --> src/lib.rs:94:1
+   = note: perhaps two different versions of crate `solana_instruction` are being used?
+note: function defined here
+  --> src/program.rs:48:8
+
+error[E0277]: `?` couldn't convert the error to `anchor_lang::error::Error`
+  --> src/util/account.rs:46:6
+   |
+13 |   ) -> Result<()> {
+   |        ---------- expected `anchor_lang::error::Error` because of this
+...
+36 | /     invoke_signed(
+37 | |         &system_instruction::create_account(
+38 | |             funder.key,
+39 | |             new_account.key,
+...  |
+45 | |         signers_seeds,
+46 | |     )?;
+   | |     -^ the trait `From<solana_program::program_error::ProgramError>` is not implemented for `anchor_lang::error::Error`
+   | |_____|
+   |       this can't be annotated with `?` because it has type `Result<_, solana_program::program_error::ProgramError>`
+   |
+   = note: the question mark operation (`?`) implicitly performs a conversion on the error value using the `From` trait
+   = help: the following other types implement trait `From<T>`:
+             `anchor_lang::error::Error` implements `From<ProgramErrorWithOrigin>`
+             `anchor_lang::error::Error` implements `From<TryFromIntError>`
+             `anchor_lang::error::Error` implements `From<anchor_lang::error::AnchorError>`
+             `anchor_lang::error::Error` implements `From<anchor_lang::error::ErrorCode>`
+             `anchor_lang::error::Error` implements `From<anchor_lang::prelude::ProgramError>`
+             `anchor_lang::error::Error` implements `From<errors::ErrorCode>`
+             `anchor_lang::error::Error` implements `From<std::io::Error>`
+   = note: required for `std::result::Result<(), anchor_lang::error::Error>` to implement `FromResidual<std::result::Result<Infallible, solana_program::program_error::ProgramError>>`
+
+error[E0308]: mismatched types
+  --> src/util/shared.rs:26:9
+   |
+25 |     match position_token_account.delegate {
+   |           ------------------------------- this expression has type `anchor_lang::solana_program::solana_program_option::COption<anchor_lang::prelude::Pubkey>`
+26 |         COption::Some(ref delegate) if position_authority.key == delegate => {
+   |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^ expected `COption<Pubkey>`, found `COption<_>`
+   |
+   = note: `COption<_>` and `COption<Pubkey>` have similar names, but are actually distinct types
+note: `COption<_>` is defined in crate `solana_program_option`
+  --> src/lib.rs:15:1
+note: `COption<Pubkey>` is defined in crate `solana_program_option`
+  --> src/lib.rs:15:1
+   = note: perhaps two different versions of crate `solana_program_option` are being used?
+
+error[E0308]: mismatched types
+  --> src/util/shared.rs:47:9
+   |
+46 |     match position_token_account.delegate {
+   |           ------------------------------- this expression has type `anchor_lang::solana_program::solana_program_option::COption<anchor_lang::prelude::Pubkey>`
+47 |         COption::Some(ref delegate) if position_authority.key == delegate => {
+   |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^ expected `COption<Pubkey>`, found `COption<_>`
+   |
+   = note: `COption<_>` and `COption<Pubkey>` have similar names, but are actually distinct types
+note: `COption<_>` is defined in crate `solana_program_option`
+  --> src/lib.rs:15:1
+note: `COption<Pubkey>` is defined in crate `solana_program_option`
+  --> src/lib.rs:15:1
+   = note: perhaps two different versions of crate `solana_program_option` are being used?
+
+error[E0308]: `?` operator has incompatible types
+  --> src/util/token.rs:65:10
+   |
+65 |           &burn_checked(
+   |  __________^
+66 | |             token_program.key,
+67 | |             position_token_account.to_account_info().key,
+68 | |             position_mint.to_account_info().key,
+...  |
+72 | |             position_mint.decimals,
+73 | |         )?,
+   | |__________^ expected `Instruction`, found a different `Instruction`
+   |
+   = note: `?` operator cannot convert from `anchor_lang::solana_program::instruction::Instruction` to `solana_program::instruction::Instruction`
+   = note: `Instruction` and `Instruction` have similar names, but are actually distinct types
+note: `Instruction` is defined in crate `solana_instruction`
+  --> src/lib.rs:97:1
+note: `Instruction` is defined in crate `solana_instruction`
+  --> src/lib.rs:94:1
+   = note: perhaps two different versions of crate `solana_instruction` are being used?
+
+error[E0308]: mismatched types
+  --> src/util/token.rs:75:13
+   |
+75 |             token_program.to_account_info(),
+   |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ expected `AccountInfo<'_>`, found a different `AccountInfo<'_>`
+   |
+   = note: `AccountInfo<'_>` and `AccountInfo<'_>` have similar names, but are actually distinct types
+note: `AccountInfo<'_>` is defined in crate `solana_account_info`
+  --> src/lib.rs:22:1
+note: `AccountInfo<'_>` is defined in crate `solana_account_info`
+  --> src/lib.rs:22:1
+   = note: perhaps two different versions of crate `solana_account_info` are being used?
+
+error[E0277]: `?` couldn't convert the error to `anchor_lang::error::Error`
+  --> src/util/token.rs:81:6
+   |
+62 |   ) -> Result<()> {
+   |        ---------- expected `anchor_lang::error::Error` because of this
+63 |       // Burn a single token in user account
+64 | /     invoke_signed(
+65 | |         &burn_checked(
+66 | |             token_program.key,
+67 | |             position_token_account.to_account_info().key,
+...  |
+80 | |         &[],
+81 | |     )?;
+   | |     -^ the trait `From<solana_program::program_error::ProgramError>` is not implemented for `anchor_lang::error::Error`
+   | |_____|
+   |       this can't be annotated with `?` because it has type `Result<_, solana_program::program_error::ProgramError>`
+   |
+   = note: the question mark operation (`?`) implicitly performs a conversion on the error value using the `From` trait
+   = help: the following other types implement trait `From<T>`:
+             `anchor_lang::error::Error` implements `From<ProgramErrorWithOrigin>`
+             `anchor_lang::error::Error` implements `From<TryFromIntError>`
+             `anchor_lang::error::Error` implements `From<anchor_lang::error::AnchorError>`
+             `anchor_lang::error::Error` implements `From<anchor_lang::error::ErrorCode>`
+             `anchor_lang::error::Error` implements `From<anchor_lang::prelude::ProgramError>`
+             `anchor_lang::error::Error` implements `From<errors::ErrorCode>`
+             `anchor_lang::error::Error` implements `From<std::io::Error>`
+   = note: required for `std::result::Result<(), anchor_lang::error::Error>` to implement `FromResidual<std::result::Result<Infallible, solana_program::program_error::ProgramError>>`
+
+error[E0308]: `?` operator has incompatible types
+  --> src/util/token.rs:85:10
+   |
+85 |           &close_account(
+   |  __________^
+86 | |             token_program.key,
+87 | |             position_token_account.to_account_info().key,
+88 | |             receiver.key,
+89 | |             token_authority.key,
+90 | |             &[],
+91 | |         )?,
+   | |__________^ expected `Instruction`, found a different `Instruction`
+   |
+   = note: `?` operator cannot convert from `anchor_lang::solana_program::instruction::Instruction` to `solana_program::instruction::Instruction`
+   = note: `Instruction` and `Instruction` have similar names, but are actually distinct types
+note: `Instruction` is defined in crate `solana_instruction`
+  --> src/lib.rs:97:1
+note: `Instruction` is defined in crate `solana_instruction`
+  --> src/lib.rs:94:1
+   = note: perhaps two different versions of crate `solana_instruction` are being used?
+
+error[E0308]: mismatched types
+  --> src/util/token.rs:93:13
+   |
+93 |             token_program.to_account_info(),
+   |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ expected `AccountInfo<'_>`, found a different `AccountInfo<'_>`
+   |
+   = note: `AccountInfo<'_>` and `AccountInfo<'_>` have similar names, but are actually distinct types
+note: `AccountInfo<'_>` is defined in crate `solana_account_info`
+  --> src/lib.rs:22:1
+note: `AccountInfo<'_>` is defined in crate `solana_account_info`
+  --> src/lib.rs:22:1
+   = note: perhaps two different versions of crate `solana_account_info` are being used?
+
+error[E0277]: `?` couldn't convert the error to `anchor_lang::error::Error`
+  --> src/util/token.rs:99:6
+   |
+62 |   ) -> Result<()> {
+   |        ---------- expected `anchor_lang::error::Error` because of this
+...
+84 | /     invoke_signed(
+85 | |         &close_account(
+86 | |             token_program.key,
+87 | |             position_token_account.to_account_info().key,
+...  |
+98 | |         &[],
+99 | |     )?;
+   | |     -^ the trait `From<solana_program::program_error::ProgramError>` is not implemented for `anchor_lang::error::Error`
+   | |_____|
+   |       this can't be annotated with `?` because it has type `Result<_, solana_program::program_error::ProgramError>`
+   |
+   = note: the question mark operation (`?`) implicitly performs a conversion on the error value using the `From` trait
+   = help: the following other types implement trait `From<T>`:
+             `anchor_lang::error::Error` implements `From<ProgramErrorWithOrigin>`
+             `anchor_lang::error::Error` implements `From<TryFromIntError>`
+             `anchor_lang::error::Error` implements `From<anchor_lang::error::AnchorError>`
+             `anchor_lang::error::Error` implements `From<anchor_lang::error::ErrorCode>`
+             `anchor_lang::error::Error` implements `From<anchor_lang::prelude::ProgramError>`
+             `anchor_lang::error::Error` implements `From<errors::ErrorCode>`
+             `anchor_lang::error::Error` implements `From<std::io::Error>`
+   = note: required for `std::result::Result<(), anchor_lang::error::Error>` to implement `FromResidual<std::result::Result<Infallible, solana_program::program_error::ProgramError>>`
+
+error[E0308]: `?` operator has incompatible types
+   --> src/util/token.rs:177:10
+    |
+177 |           &mint_to(
+    |  __________^
+178 | |             token_program.key,
+179 | |             position_mint.to_account_info().key,
+180 | |             position_token_account.to_account_info().key,
+...   |
+183 | |             1,
+184 | |         )?,
+    | |__________^ expected `Instruction`, found a different `Instruction`
+    |
+    = note: `?` operator cannot convert from `anchor_lang::solana_program::instruction::Instruction` to `solana_program::instruction::Instruction`
+    = note: `Instruction` and `Instruction` have similar names, but are actually distinct types
+note: `Instruction` is defined in crate `solana_instruction`
+   --> src/lib.rs:97:1
+note: `Instruction` is defined in crate `solana_instruction`
+   --> src/lib.rs:94:1
+    = note: perhaps two different versions of crate `solana_instruction` are being used?
+
+error[E0308]: mismatched types
+   --> src/util/token.rs:186:13
+    |
+186 |             position_mint.to_account_info(),
+    |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ expected `AccountInfo<'_>`, found a different `AccountInfo<'_>`
+    |
+    = note: `AccountInfo<'_>` and `AccountInfo<'_>` have similar names, but are actually distinct types
+note: `AccountInfo<'_>` is defined in crate `solana_account_info`
+   --> src/lib.rs:22:1
+note: `AccountInfo<'_>` is defined in crate `solana_account_info`
+   --> src/lib.rs:22:1
+    = note: perhaps two different versions of crate `solana_account_info` are being used?
+
+error[E0277]: `?` couldn't convert the error to `anchor_lang::error::Error`
+   --> src/util/token.rs:192:6
+    |
+175 |   ) -> Result<()> {
+    |        ---------- expected `anchor_lang::error::Error` because of this
+176 | /     invoke_signed(
+177 | |         &mint_to(
+178 | |             token_program.key,
+179 | |             position_mint.to_account_info().key,
+...   |
+191 | |         &[&whirlpool.seeds()],
+192 | |     )?;
+    | |     -^ the trait `From<solana_program::program_error::ProgramError>` is not implemented for `anchor_lang::error::Error`
+    | |_____|
+    |       this can't be annotated with `?` because it has type `Result<_, solana_program::program_error::ProgramError>`
+    |
+    = note: the question mark operation (`?`) implicitly performs a conversion on the error value using the `From` trait
+    = help: the following other types implement trait `From<T>`:
+              `anchor_lang::error::Error` implements `From<ProgramErrorWithOrigin>`
+              `anchor_lang::error::Error` implements `From<TryFromIntError>`
+              `anchor_lang::error::Error` implements `From<anchor_lang::error::AnchorError>`
+              `anchor_lang::error::Error` implements `From<anchor_lang::error::ErrorCode>`
+              `anchor_lang::error::Error` implements `From<anchor_lang::prelude::ProgramError>`
+              `anchor_lang::error::Error` implements `From<errors::ErrorCode>`
+              `anchor_lang::error::Error` implements `From<std::io::Error>`
+    = note: required for `std::result::Result<(), anchor_lang::error::Error>` to implement `FromResidual<std::result::Result<Infallible, solana_program::program_error::ProgramError>>`
+
+error[E0308]: `?` operator has incompatible types
+   --> src/util/token.rs:202:10
+    |
+202 |           &set_authority(
+    |  __________^
+203 | |             token_program.key,
+204 | |             position_mint.to_account_info().key,
+205 | |             Option::None,
+...   |
+208 | |             &[whirlpool.to_account_info().key],
+209 | |         )?,
+    | |__________^ expected `Instruction`, found a different `Instruction`
+    |
+    = note: `?` operator cannot convert from `anchor_lang::solana_program::instruction::Instruction` to `solana_program::instruction::Instruction`
+    = note: `Instruction` and `Instruction` have similar names, but are actually distinct types
+note: `Instruction` is defined in crate `solana_instruction`
+   --> src/lib.rs:97:1
+note: `Instruction` is defined in crate `solana_instruction`
+   --> src/lib.rs:94:1
+    = note: perhaps two different versions of crate `solana_instruction` are being used?
+
+error[E0308]: mismatched types
+   --> src/util/token.rs:211:13
+    |
+211 |             position_mint.to_account_info(),
+    |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ expected `AccountInfo<'_>`, found a different `AccountInfo<'_>`
+    |
+    = note: `AccountInfo<'_>` and `AccountInfo<'_>` have similar names, but are actually distinct types
+note: `AccountInfo<'_>` is defined in crate `solana_account_info`
+   --> src/lib.rs:22:1
+note: `AccountInfo<'_>` is defined in crate `solana_account_info`
+   --> src/lib.rs:22:1
+    = note: perhaps two different versions of crate `solana_account_info` are being used?
+
+error[E0277]: `?` couldn't convert the error to `anchor_lang::error::Error`
+   --> src/util/token.rs:216:6
+    |
+200 |   ) -> Result<()> {
+    |        ---------- expected `anchor_lang::error::Error` because of this
+201 | /     invoke_signed(
+202 | |         &set_authority(
+203 | |             token_program.key,
+204 | |             position_mint.to_account_info().key,
+...   |
+215 | |         &[&whirlpool.seeds()],
+216 | |     )?;
+    | |     -^ the trait `From<solana_program::program_error::ProgramError>` is not implemented for `anchor_lang::error::Error`
+    | |_____|
+    |       this can't be annotated with `?` because it has type `Result<_, solana_program::program_error::ProgramError>`
+    |
+    = note: the question mark operation (`?`) implicitly performs a conversion on the error value using the `From` trait
+    = help: the following other types implement trait `From<T>`:
+              `anchor_lang::error::Error` implements `From<ProgramErrorWithOrigin>`
+              `anchor_lang::error::Error` implements `From<TryFromIntError>`
+              `anchor_lang::error::Error` implements `From<anchor_lang::error::AnchorError>`
+              `anchor_lang::error::Error` implements `From<anchor_lang::error::ErrorCode>`
+              `anchor_lang::error::Error` implements `From<anchor_lang::prelude::ProgramError>`
+              `anchor_lang::error::Error` implements `From<errors::ErrorCode>`
+              `anchor_lang::error::Error` implements `From<std::io::Error>`
+    = note: required for `std::result::Result<(), anchor_lang::error::Error>` to implement `FromResidual<std::result::Result<Infallible, solana_program::program_error::ProgramError>>`
+
+error[E0308]: `?` operator has incompatible types
+   --> src/util/token.rs:318:10
+    |
+318 |           &mint_to(
+    |  __________^
+319 | |             token_program.key,
+320 | |             position_bundle_mint.to_account_info().key,
+321 | |             position_bundle_token_account.to_account_info().key,
+...   |
+324 | |             1,
+325 | |         )?,
+    | |__________^ expected `Instruction`, found a different `Instruction`
+    |
+    = note: `?` operator cannot convert from `anchor_lang::solana_program::instruction::Instruction` to `solana_program::instruction::Instruction`
+    = note: `Instruction` and `Instruction` have similar names, but are actually distinct types
+note: `Instruction` is defined in crate `solana_instruction`
+   --> src/lib.rs:97:1
+note: `Instruction` is defined in crate `solana_instruction`
+   --> src/lib.rs:94:1
+    = note: perhaps two different versions of crate `solana_instruction` are being used?
+
+error[E0308]: mismatched types
+   --> src/util/token.rs:327:13
+    |
+327 |             position_bundle_mint.to_account_info(),
+    |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ expected `AccountInfo<'_>`, found a different `AccountInfo<'_>`
+    |
+    = note: `AccountInfo<'_>` and `AccountInfo<'_>` have similar names, but are actually distinct types
+note: `AccountInfo<'_>` is defined in crate `solana_account_info`
+   --> src/lib.rs:22:1
+note: `AccountInfo<'_>` is defined in crate `solana_account_info`
+   --> src/lib.rs:22:1
+    = note: perhaps two different versions of crate `solana_account_info` are being used?
+
+error[E0277]: `?` couldn't convert the error to `anchor_lang::error::Error`
+   --> src/util/token.rs:333:6
+    |
+316 |   ) -> Result<()> {
+    |        ---------- expected `anchor_lang::error::Error` because of this
+317 | /     invoke_signed(
+318 | |         &mint_to(
+319 | |             token_program.key,
+320 | |             position_bundle_mint.to_account_info().key,
+...   |
+332 | |         &[position_bundle_seeds],
+333 | |     )?;
+    | |     -^ the trait `From<solana_program::program_error::ProgramError>` is not implemented for `anchor_lang::error::Error`
+    | |_____|
+    |       this can't be annotated with `?` because it has type `Result<_, solana_program::program_error::ProgramError>`
+    |
+    = note: the question mark operation (`?`) implicitly performs a conversion on the error value using the `From` trait
+    = help: the following other types implement trait `From<T>`:
+              `anchor_lang::error::Error` implements `From<ProgramErrorWithOrigin>`
+              `anchor_lang::error::Error` implements `From<TryFromIntError>`
+              `anchor_lang::error::Error` implements `From<anchor_lang::error::AnchorError>`
+              `anchor_lang::error::Error` implements `From<anchor_lang::error::ErrorCode>`
+              `anchor_lang::error::Error` implements `From<anchor_lang::prelude::ProgramError>`
+              `anchor_lang::error::Error` implements `From<errors::ErrorCode>`
+              `anchor_lang::error::Error` implements `From<std::io::Error>`
+    = note: required for `std::result::Result<(), anchor_lang::error::Error>` to implement `FromResidual<std::result::Result<Infallible, solana_program::program_error::ProgramError>>`
+
+error[E0308]: `?` operator has incompatible types
+   --> src/util/token.rs:345:10
+    |
+345 |           &set_authority(
+    |  __________^
+346 | |             token_program.key,
+347 | |             position_bundle_mint.to_account_info().key,
+348 | |             Option::None,
+...   |
+351 | |             &[],
+352 | |         )?,
+    | |__________^ expected `Instruction`, found a different `Instruction`
+    |
+    = note: `?` operator cannot convert from `anchor_lang::solana_program::instruction::Instruction` to `solana_program::instruction::Instruction`
+    = note: `Instruction` and `Instruction` have similar names, but are actually distinct types
+note: `Instruction` is defined in crate `solana_instruction`
+   --> src/lib.rs:97:1
+note: `Instruction` is defined in crate `solana_instruction`
+   --> src/lib.rs:94:1
+    = note: perhaps two different versions of crate `solana_instruction` are being used?
+
+error[E0308]: mismatched types
+   --> src/util/token.rs:354:13
+    |
+354 |             position_bundle_mint.to_account_info(),
+    |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ expected `AccountInfo<'_>`, found a different `AccountInfo<'_>`
+    |
+    = note: `AccountInfo<'_>` and `AccountInfo<'_>` have similar names, but are actually distinct types
+note: `AccountInfo<'_>` is defined in crate `solana_account_info`
+   --> src/lib.rs:22:1
+note: `AccountInfo<'_>` is defined in crate `solana_account_info`
+   --> src/lib.rs:22:1
+    = note: perhaps two different versions of crate `solana_account_info` are being used?
+
+error[E0277]: `?` couldn't convert the error to `anchor_lang::error::Error`
+   --> src/util/token.rs:359:6
+    |
+343 |   ) -> Result<()> {
+    |        ---------- expected `anchor_lang::error::Error` because of this
+344 | /     invoke_signed(
+345 | |         &set_authority(
+346 | |             token_program.key,
+347 | |             position_bundle_mint.to_account_info().key,
+...   |
+358 | |         &[position_bundle_seeds],
+359 | |     )?;
+    | |     -^ the trait `From<solana_program::program_error::ProgramError>` is not implemented for `anchor_lang::error::Error`
+    | |_____|
+    |       this can't be annotated with `?` because it has type `Result<_, solana_program::program_error::ProgramError>`
+    |
+    = note: the question mark operation (`?`) implicitly performs a conversion on the error value using the `From` trait
+    = help: the following other types implement trait `From<T>`:
+              `anchor_lang::error::Error` implements `From<ProgramErrorWithOrigin>`
+              `anchor_lang::error::Error` implements `From<TryFromIntError>`
+              `anchor_lang::error::Error` implements `From<anchor_lang::error::AnchorError>`
+              `anchor_lang::error::Error` implements `From<anchor_lang::error::ErrorCode>`
+              `anchor_lang::error::Error` implements `From<anchor_lang::prelude::ProgramError>`
+              `anchor_lang::error::Error` implements `From<errors::ErrorCode>`
+              `anchor_lang::error::Error` implements `From<std::io::Error>`
+    = note: required for `std::result::Result<(), anchor_lang::error::Error>` to implement `FromResidual<std::result::Result<Infallible, solana_program::program_error::ProgramError>>`
+
+error[E0308]: `?` operator has incompatible types
+  --> src/util/token_2022.rs:59:10
+   |
+59 |           &spl_token_2022::instruction::initialize_mint_close_authority(
+   |  __________^
+60 | |             token_2022_program.key,
+61 | |             position_mint.key,
+62 | |             Some(&authority.key()),
+63 | |         )?,
+   | |__________^ expected `Instruction`, found a different `Instruction`
+   |
+   = note: `?` operator cannot convert from `anchor_lang::solana_program::instruction::Instruction` to `solana_program::instruction::Instruction`
+   = note: `Instruction` and `Instruction` have similar names, but are actually distinct types
+note: `Instruction` is defined in crate `solana_instruction`
+  --> src/lib.rs:97:1
+note: `Instruction` is defined in crate `solana_instruction`
+  --> src/lib.rs:94:1
+   = note: perhaps two different versions of crate `solana_instruction` are being used?
+
+error[E0308]: mismatched types
+  --> src/util/token_2022.rs:65:13
+   |
+65 |             position_mint.to_account_info(),
+   |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ expected `AccountInfo<'_>`, found a different `AccountInfo<'_>`
+   |
+   = note: `AccountInfo<'_>` and `AccountInfo<'_>` have similar names, but are actually distinct types
+note: `AccountInfo<'_>` is defined in crate `solana_account_info`
+  --> src/lib.rs:22:1
+note: `AccountInfo<'_>` is defined in crate `solana_account_info`
+  --> src/lib.rs:22:1
+   = note: perhaps two different versions of crate `solana_account_info` are being used?
+
+error[E0277]: `?` couldn't convert the error to `anchor_lang::error::Error`
+  --> src/util/token_2022.rs:69:6
+   |
+29 |   ) -> Result<()> {
+   |        ---------- expected `anchor_lang::error::Error` because of this
+...
+58 | /     invoke(
+59 | |         &spl_token_2022::instruction::initialize_mint_close_authority(
+60 | |             token_2022_program.key,
+61 | |             position_mint.key,
+...  |
+68 | |         ],
+69 | |     )?;
+   | |     -^ the trait `From<solana_program::program_error::ProgramError>` is not implemented for `anchor_lang::error::Error`
+   | |_____|
+   |       this can't be annotated with `?` because it has type `Result<_, solana_program::program_error::ProgramError>`
+   |
+   = note: the question mark operation (`?`) implicitly performs a conversion on the error value using the `From` trait
+   = help: the following other types implement trait `From<T>`:
+             `anchor_lang::error::Error` implements `From<ProgramErrorWithOrigin>`
+             `anchor_lang::error::Error` implements `From<TryFromIntError>`
+             `anchor_lang::error::Error` implements `From<anchor_lang::error::AnchorError>`
+             `anchor_lang::error::Error` implements `From<anchor_lang::error::ErrorCode>`
+             `anchor_lang::error::Error` implements `From<anchor_lang::prelude::ProgramError>`
+             `anchor_lang::error::Error` implements `From<errors::ErrorCode>`
+             `anchor_lang::error::Error` implements `From<std::io::Error>`
+   = note: required for `std::result::Result<(), anchor_lang::error::Error>` to implement `FromResidual<std::result::Result<Infallible, solana_program::program_error::ProgramError>>`
+
+error[E0308]: `?` operator has incompatible types
+  --> src/util/token_2022.rs:77:14
+   |
+77 |               &spl_token_2022::extension::metadata_pointer::instruction::initialize(
+   |  ______________^
+78 | |                 token_2022_program.key,
+79 | |                 position_mint.key,
+80 | |                 None,
+81 | |                 Some(position_mint.key()),
+82 | |             )?,
+   | |______________^ expected `Instruction`, found a different `Instruction`
+   |
+   = note: `?` operator cannot convert from `anchor_lang::solana_program::instruction::Instruction` to `solana_program::instruction::Instruction`
+   = note: `Instruction` and `Instruction` have similar names, but are actually distinct types
+note: `Instruction` is defined in crate `solana_instruction`
+  --> src/lib.rs:97:1
+note: `Instruction` is defined in crate `solana_instruction`
+  --> src/lib.rs:94:1
+   = note: perhaps two different versions of crate `solana_instruction` are being used?
+
+error[E0308]: mismatched types
+  --> src/util/token_2022.rs:84:17
+   |
+84 |                 position_mint.to_account_info(),
+   |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ expected `AccountInfo<'_>`, found a different `AccountInfo<'_>`
+   |
+   = note: `AccountInfo<'_>` and `AccountInfo<'_>` have similar names, but are actually distinct types
+note: `AccountInfo<'_>` is defined in crate `solana_account_info`
+  --> src/lib.rs:22:1
+note: `AccountInfo<'_>` is defined in crate `solana_account_info`
+  --> src/lib.rs:22:1
+   = note: perhaps two different versions of crate `solana_account_info` are being used?
+
+error[E0277]: `?` couldn't convert the error to `anchor_lang::error::Error`
+  --> src/util/token_2022.rs:88:10
+   |
+29 |   ) -> Result<()> {
+   |        ---------- expected `anchor_lang::error::Error` because of this
+...
+76 | /         invoke(
+77 | |             &spl_token_2022::extension::metadata_pointer::instruction::initialize(
+78 | |                 token_2022_program.key,
+79 | |                 position_mint.key,
+...  |
+87 | |             ],
+88 | |         )?;
+   | |         -^ the trait `From<solana_program::program_error::ProgramError>` is not implemented for `anchor_lang::error::Error`
+   | |_________|
+   |           this can't be annotated with `?` because it has type `Result<_, solana_program::program_error::ProgramError>`
+   |
+   = note: the question mark operation (`?`) implicitly performs a conversion on the error value using the `From` trait
+   = help: the following other types implement trait `From<T>`:
+             `anchor_lang::error::Error` implements `From<ProgramErrorWithOrigin>`
+             `anchor_lang::error::Error` implements `From<TryFromIntError>`
+             `anchor_lang::error::Error` implements `From<anchor_lang::error::AnchorError>`
+             `anchor_lang::error::Error` implements `From<anchor_lang::error::ErrorCode>`
+             `anchor_lang::error::Error` implements `From<anchor_lang::prelude::ProgramError>`
+             `anchor_lang::error::Error` implements `From<errors::ErrorCode>`
+             `anchor_lang::error::Error` implements `From<std::io::Error>`
+   = note: required for `std::result::Result<(), anchor_lang::error::Error>` to implement `FromResidual<std::result::Result<Infallible, solana_program::program_error::ProgramError>>`
+
+error[E0308]: `?` operator has incompatible types
+  --> src/util/token_2022.rs:94:14
+   |
+94 |               &spl_token_2022::instruction::initialize_non_transferable_mint(
+   |  ______________^
+95 | |                 token_2022_program.key,
+96 | |                 position_mint.key,
+97 | |             )?,
+   | |______________^ expected `Instruction`, found a different `Instruction`
+   |
+   = note: `?` operator cannot convert from `anchor_lang::solana_program::instruction::Instruction` to `solana_program::instruction::Instruction`
+   = note: `Instruction` and `Instruction` have similar names, but are actually distinct types
+note: `Instruction` is defined in crate `solana_instruction`
+  --> src/lib.rs:97:1
+note: `Instruction` is defined in crate `solana_instruction`
+  --> src/lib.rs:94:1
+   = note: perhaps two different versions of crate `solana_instruction` are being used?
+
+error[E0308]: mismatched types
+  --> src/util/token_2022.rs:99:17
+   |
+99 |                 position_mint.to_account_info(),
+   |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ expected `AccountInfo<'_>`, found a different `AccountInfo<'_>`
+   |
+   = note: `AccountInfo<'_>` and `AccountInfo<'_>` have similar names, but are actually distinct types
+note: `AccountInfo<'_>` is defined in crate `solana_account_info`
+  --> src/lib.rs:22:1
+note: `AccountInfo<'_>` is defined in crate `solana_account_info`
+  --> src/lib.rs:22:1
+   = note: perhaps two different versions of crate `solana_account_info` are being used?
+
+error[E0277]: `?` couldn't convert the error to `anchor_lang::error::Error`
+   --> src/util/token_2022.rs:102:10
+    |
+29  |   ) -> Result<()> {
+    |        ---------- expected `anchor_lang::error::Error` because of this
+...
+93  | /         invoke(
+94  | |             &spl_token_2022::instruction::initialize_non_transferable_mint(
+95  | |                 token_2022_program.key,
+96  | |                 position_mint.key,
+...   |
+101 | |             ],
+102 | |         )?;
+    | |         -^ the trait `From<solana_program::program_error::ProgramError>` is not implemented for `anchor_lang::error::Error`
+    | |_________|
+    |           this can't be annotated with `?` because it has type `Result<_, solana_program::program_error::ProgramError>`
+    |
+    = note: the question mark operation (`?`) implicitly performs a conversion on the error value using the `From` trait
+    = help: the following other types implement trait `From<T>`:
+              `anchor_lang::error::Error` implements `From<ProgramErrorWithOrigin>`
+              `anchor_lang::error::Error` implements `From<TryFromIntError>`
+              `anchor_lang::error::Error` implements `From<anchor_lang::error::AnchorError>`
+              `anchor_lang::error::Error` implements `From<anchor_lang::error::ErrorCode>`
+              `anchor_lang::error::Error` implements `From<anchor_lang::prelude::ProgramError>`
+              `anchor_lang::error::Error` implements `From<errors::ErrorCode>`
+              `anchor_lang::error::Error` implements `From<std::io::Error>`
+    = note: required for `std::result::Result<(), anchor_lang::error::Error>` to implement `FromResidual<std::result::Result<Infallible, solana_program::program_error::ProgramError>>`
+
+error[E0308]: `?` operator has incompatible types
+   --> src/util/token_2022.rs:109:10
+    |
+109 |           &spl_token_2022::instruction::initialize_mint2(
+    |  __________^
+110 | |             token_2022_program.key,
+111 | |             position_mint.key,
+112 | |             &authority.key(),
+113 | |             Some(&authority.key()),
+114 | |             0,
+115 | |         )?,
+    | |__________^ expected `Instruction`, found a different `Instruction`
+    |
+    = note: `?` operator cannot convert from `anchor_lang::solana_program::instruction::Instruction` to `solana_program::instruction::Instruction`
+    = note: `Instruction` and `Instruction` have similar names, but are actually distinct types
+note: `Instruction` is defined in crate `solana_instruction`
+   --> src/lib.rs:97:1
+note: `Instruction` is defined in crate `solana_instruction`
+   --> src/lib.rs:94:1
+    = note: perhaps two different versions of crate `solana_instruction` are being used?
+
+error[E0308]: mismatched types
+   --> src/util/token_2022.rs:117:13
+    |
+117 |             position_mint.to_account_info(),
+    |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ expected `AccountInfo<'_>`, found a different `AccountInfo<'_>`
+    |
+    = note: `AccountInfo<'_>` and `AccountInfo<'_>` have similar names, but are actually distinct types
+note: `AccountInfo<'_>` is defined in crate `solana_account_info`
+   --> src/lib.rs:22:1
+note: `AccountInfo<'_>` is defined in crate `solana_account_info`
+   --> src/lib.rs:22:1
+    = note: perhaps two different versions of crate `solana_account_info` are being used?
+
+error[E0277]: `?` couldn't convert the error to `anchor_lang::error::Error`
+   --> src/util/token_2022.rs:121:6
+    |
+29  |   ) -> Result<()> {
+    |        ---------- expected `anchor_lang::error::Error` because of this
+...
+108 | /     invoke(
+109 | |         &spl_token_2022::instruction::initialize_mint2(
+110 | |             token_2022_program.key,
+111 | |             position_mint.key,
+...   |
+120 | |         ],
+121 | |     )?;
+    | |     -^ the trait `From<solana_program::program_error::ProgramError>` is not implemented for `anchor_lang::error::Error`
+    | |_____|
+    |       this can't be annotated with `?` because it has type `Result<_, solana_program::program_error::ProgramError>`
+    |
+    = note: the question mark operation (`?`) implicitly performs a conversion on the error value using the `From` trait
+    = help: the following other types implement trait `From<T>`:
+              `anchor_lang::error::Error` implements `From<ProgramErrorWithOrigin>`
+              `anchor_lang::error::Error` implements `From<TryFromIntError>`
+              `anchor_lang::error::Error` implements `From<anchor_lang::error::AnchorError>`
+              `anchor_lang::error::Error` implements `From<anchor_lang::error::ErrorCode>`
+              `anchor_lang::error::Error` implements `From<anchor_lang::prelude::ProgramError>`
+              `anchor_lang::error::Error` implements `From<errors::ErrorCode>`
+              `anchor_lang::error::Error` implements `From<std::io::Error>`
+    = note: required for `std::result::Result<(), anchor_lang::error::Error>` to implement `FromResidual<std::result::Result<Infallible, solana_program::program_error::ProgramError>>`
+
+error[E0308]: mismatched types
+   --> src/util/token_2022.rs:163:13
+    |
+163 |             funder.to_account_info(),
+    |             ^^^^^^^^^^^^^^^^^^^^^^^^ expected `AccountInfo<'_>`, found a different `AccountInfo<'_>`
+    |
+    = note: `AccountInfo<'_>` and `AccountInfo<'_>` have similar names, but are actually distinct types
+note: `AccountInfo<'_>` is defined in crate `solana_account_info`
+   --> src/lib.rs:22:1
+note: `AccountInfo<'_>` is defined in crate `solana_account_info`
+   --> src/lib.rs:22:1
+    = note: perhaps two different versions of crate `solana_account_info` are being used?
+
+error[E0277]: `?` couldn't convert the error to `anchor_lang::error::Error`
+   --> src/util/token_2022.rs:167:6
+    |
+138 |   ) -> Result<()> {
+    |        ---------- expected `anchor_lang::error::Error` because of this
+...
+160 | /     invoke(
+161 | |         &transfer(funder.key, position_mint.key, additional_rent),
+162 | |         &[
+163 | |             funder.to_account_info(),
+...   |
+166 | |         ],
+167 | |     )?;
+    | |     -^ the trait `From<solana_program::program_error::ProgramError>` is not implemented for `anchor_lang::error::Error`
+    | |_____|
+    |       this can't be annotated with `?` because it has type `Result<_, solana_program::program_error::ProgramError>`
+    |
+    = note: the question mark operation (`?`) implicitly performs a conversion on the error value using the `From` trait
+    = help: the following other types implement trait `From<T>`:
+              `anchor_lang::error::Error` implements `From<ProgramErrorWithOrigin>`
+              `anchor_lang::error::Error` implements `From<TryFromIntError>`
+              `anchor_lang::error::Error` implements `From<anchor_lang::error::AnchorError>`
+              `anchor_lang::error::Error` implements `From<anchor_lang::error::ErrorCode>`
+              `anchor_lang::error::Error` implements `From<anchor_lang::prelude::ProgramError>`
+              `anchor_lang::error::Error` implements `From<errors::ErrorCode>`
+              `anchor_lang::error::Error` implements `From<std::io::Error>`
+    = note: required for `std::result::Result<(), anchor_lang::error::Error>` to implement `FromResidual<std::result::Result<Infallible, solana_program::program_error::ProgramError>>`
+
+error[E0308]: mismatched types
+   --> src/util/token_2022.rs:183:13
+    |
+183 |             position_mint.to_account_info(),
+    |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ expected `AccountInfo<'_>`, found a different `AccountInfo<'_>`
+    |
+    = note: `AccountInfo<'_>` and `AccountInfo<'_>` have similar names, but are actually distinct types
+note: `AccountInfo<'_>` is defined in crate `solana_account_info`
+   --> src/lib.rs:22:1
+note: `AccountInfo<'_>` is defined in crate `solana_account_info`
+   --> src/lib.rs:22:1
+    = note: perhaps two different versions of crate `solana_account_info` are being used?
+
+error[E0308]: mismatched types
+   --> src/util/token_2022.rs:172:9
+    |
+171 |       invoke_signed(
+    |       ------------- arguments to this function are incorrect
+172 | /         &spl_token_metadata_interface::instruction::initialize(
+173 | |             token_2022_program.key,
+174 | |             position_mint.key,
+175 | |             metadata_update_authority.key,
+...   |
+180 | |             metadata.uri,
+181 | |         ),
+    | |_________^ expected `Instruction`, found a different `Instruction`
+    |
+    = note: `Instruction` and `Instruction` have similar names, but are actually distinct types
+note: `Instruction` is defined in crate `solana_instruction`
+   --> src/lib.rs:97:1
+note: `Instruction` is defined in crate `solana_instruction`
+   --> src/lib.rs:94:1
+    = note: perhaps two different versions of crate `solana_instruction` are being used?
+note: function defined here
+   --> src/program.rs:48:8
+
+error[E0277]: `?` couldn't convert the error to `anchor_lang::error::Error`
+   --> src/util/token_2022.rs:189:6
+    |
+138 |   ) -> Result<()> {
+    |        ---------- expected `anchor_lang::error::Error` because of this
+...
+171 | /     invoke_signed(
+172 | |         &spl_token_metadata_interface::instruction::initialize(
+173 | |             token_2022_program.key,
+174 | |             position_mint.key,
+...   |
+188 | |         &[position_seeds],
+189 | |     )?;
+    | |     -^ the trait `From<solana_program::program_error::ProgramError>` is not implemented for `anchor_lang::error::Error`
+    | |_____|
+    |       this can't be annotated with `?` because it has type `Result<_, solana_program::program_error::ProgramError>`
+    |
+    = note: the question mark operation (`?`) implicitly performs a conversion on the error value using the `From` trait
+    = help: the following other types implement trait `From<T>`:
+              `anchor_lang::error::Error` implements `From<ProgramErrorWithOrigin>`
+              `anchor_lang::error::Error` implements `From<TryFromIntError>`
+              `anchor_lang::error::Error` implements `From<anchor_lang::error::AnchorError>`
+              `anchor_lang::error::Error` implements `From<anchor_lang::error::ErrorCode>`
+              `anchor_lang::error::Error` implements `From<anchor_lang::prelude::ProgramError>`
+              `anchor_lang::error::Error` implements `From<errors::ErrorCode>`
+              `anchor_lang::error::Error` implements `From<std::io::Error>`
+    = note: required for `std::result::Result<(), anchor_lang::error::Error>` to implement `FromResidual<std::result::Result<Infallible, solana_program::program_error::ProgramError>>`
+
+error[E0308]: `?` operator has incompatible types
+   --> src/util/token_2022.rs:227:10
+    |
+227 |           &spl_token_2022::instruction::mint_to(
+    |  __________^
+228 | |             token_2022_program.key,
+229 | |             position_mint.to_account_info().key,
+230 | |             position_token_account.to_account_info().key,
+...   |
+233 | |             1,
+234 | |         )?,
+    | |__________^ expected `Instruction`, found a different `Instruction`
+    |
+    = note: `?` operator cannot convert from `anchor_lang::solana_program::instruction::Instruction` to `solana_program::instruction::Instruction`
+    = note: `Instruction` and `Instruction` have similar names, but are actually distinct types
+note: `Instruction` is defined in crate `solana_instruction`
+   --> src/lib.rs:97:1
+note: `Instruction` is defined in crate `solana_instruction`
+   --> src/lib.rs:94:1
+    = note: perhaps two different versions of crate `solana_instruction` are being used?
+
+error[E0308]: mismatched types
+   --> src/util/token_2022.rs:236:13
+    |
+236 |             position_mint.to_account_info(),
+    |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ expected `AccountInfo<'_>`, found a different `AccountInfo<'_>`
+    |
+    = note: `AccountInfo<'_>` and `AccountInfo<'_>` have similar names, but are actually distinct types
+note: `AccountInfo<'_>` is defined in crate `solana_account_info`
+   --> src/lib.rs:22:1
+note: `AccountInfo<'_>` is defined in crate `solana_account_info`
+   --> src/lib.rs:22:1
+    = note: perhaps two different versions of crate `solana_account_info` are being used?
+
+error[E0277]: `?` couldn't convert the error to `anchor_lang::error::Error`
+   --> src/util/token_2022.rs:242:6
+    |
+222 |   ) -> Result<()> {
+    |        ---------- expected `anchor_lang::error::Error` because of this
+...
+226 | /     invoke_signed(
+227 | |         &spl_token_2022::instruction::mint_to(
+228 | |             token_2022_program.key,
+229 | |             position_mint.to_account_info().key,
+...   |
+241 | |         &[position_seeds],
+242 | |     )?;
+    | |     -^ the trait `From<solana_program::program_error::ProgramError>` is not implemented for `anchor_lang::error::Error`
+    | |_____|
+    |       this can't be annotated with `?` because it has type `Result<_, solana_program::program_error::ProgramError>`
+    |
+    = note: the question mark operation (`?`) implicitly performs a conversion on the error value using the `From` trait
+    = help: the following other types implement trait `From<T>`:
+              `anchor_lang::error::Error` implements `From<ProgramErrorWithOrigin>`
+              `anchor_lang::error::Error` implements `From<TryFromIntError>`
+              `anchor_lang::error::Error` implements `From<anchor_lang::error::AnchorError>`
+              `anchor_lang::error::Error` implements `From<anchor_lang::error::ErrorCode>`
+              `anchor_lang::error::Error` implements `From<anchor_lang::prelude::ProgramError>`
+              `anchor_lang::error::Error` implements `From<errors::ErrorCode>`
+              `anchor_lang::error::Error` implements `From<std::io::Error>`
+    = note: required for `std::result::Result<(), anchor_lang::error::Error>` to implement `FromResidual<std::result::Result<Infallible, solana_program::program_error::ProgramError>>`
+
+error[E0308]: `?` operator has incompatible types
+   --> src/util/token_2022.rs:246:10
+    |
+246 |           &spl_token_2022::instruction::set_authority(
+    |  __________^
+247 | |             token_2022_program.key,
+248 | |             position_mint.to_account_info().key,
+249 | |             Option::None,
+...   |
+252 | |             &[authority.to_account_info().key],
+253 | |         )?,
+    | |__________^ expected `Instruction`, found a different `Instruction`
+    |
+    = note: `?` operator cannot convert from `anchor_lang::solana_program::instruction::Instruction` to `solana_program::instruction::Instruction`
+    = note: `Instruction` and `Instruction` have similar names, but are actually distinct types
+note: `Instruction` is defined in crate `solana_instruction`
+   --> src/lib.rs:97:1
+note: `Instruction` is defined in crate `solana_instruction`
+   --> src/lib.rs:94:1
+    = note: perhaps two different versions of crate `solana_instruction` are being used?
+
+error[E0308]: mismatched types
+   --> src/util/token_2022.rs:255:13
+    |
+255 |             position_mint.to_account_info(),
+    |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ expected `AccountInfo<'_>`, found a different `AccountInfo<'_>`
+    |
+    = note: `AccountInfo<'_>` and `AccountInfo<'_>` have similar names, but are actually distinct types
+note: `AccountInfo<'_>` is defined in crate `solana_account_info`
+   --> src/lib.rs:22:1
+note: `AccountInfo<'_>` is defined in crate `solana_account_info`
+   --> src/lib.rs:22:1
+    = note: perhaps two different versions of crate `solana_account_info` are being used?
+
+error[E0277]: `?` couldn't convert the error to `anchor_lang::error::Error`
+   --> src/util/token_2022.rs:260:6
+    |
+222 |   ) -> Result<()> {
+    |        ---------- expected `anchor_lang::error::Error` because of this
+...
+245 | /     invoke_signed(
+246 | |         &spl_token_2022::instruction::set_authority(
+247 | |             token_2022_program.key,
+248 | |             position_mint.to_account_info().key,
+...   |
+259 | |         &[position_seeds],
+260 | |     )?;
+    | |     -^ the trait `From<solana_program::program_error::ProgramError>` is not implemented for `anchor_lang::error::Error`
+    | |_____|
+    |       this can't be annotated with `?` because it has type `Result<_, solana_program::program_error::ProgramError>`
+    |
+    = note: the question mark operation (`?`) implicitly performs a conversion on the error value using the `From` trait
+    = help: the following other types implement trait `From<T>`:
+              `anchor_lang::error::Error` implements `From<ProgramErrorWithOrigin>`
+              `anchor_lang::error::Error` implements `From<TryFromIntError>`
+              `anchor_lang::error::Error` implements `From<anchor_lang::error::AnchorError>`
+              `anchor_lang::error::Error` implements `From<anchor_lang::error::ErrorCode>`
+              `anchor_lang::error::Error` implements `From<anchor_lang::prelude::ProgramError>`
+              `anchor_lang::error::Error` implements `From<errors::ErrorCode>`
+              `anchor_lang::error::Error` implements `From<std::io::Error>`
+    = note: required for `std::result::Result<(), anchor_lang::error::Error>` to implement `FromResidual<std::result::Result<Infallible, solana_program::program_error::ProgramError>>`
+
+error[E0308]: `?` operator has incompatible types
+   --> src/util/token_2022.rs:276:10
+    |
+276 |           &spl_token_2022::instruction::burn_checked(
+    |  __________^
+277 | |             token_2022_program.key,
+278 | |             position_token_account.to_account_info().key,
+279 | |             position_mint.to_account_info().key,
+...   |
+283 | |             position_mint.decimals,
+284 | |         )?,
+    | |__________^ expected `Instruction`, found a different `Instruction`
+    |
+    = note: `?` operator cannot convert from `anchor_lang::solana_program::instruction::Instruction` to `solana_program::instruction::Instruction`
+    = note: `Instruction` and `Instruction` have similar names, but are actually distinct types
+note: `Instruction` is defined in crate `solana_instruction`
+   --> src/lib.rs:97:1
+note: `Instruction` is defined in crate `solana_instruction`
+   --> src/lib.rs:94:1
+    = note: perhaps two different versions of crate `solana_instruction` are being used?
+
+error[E0308]: mismatched types
+   --> src/util/token_2022.rs:286:13
+    |
+286 |             token_2022_program.to_account_info(),
+    |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ expected `AccountInfo<'_>`, found a different `AccountInfo<'_>`
+    |
+    = note: `AccountInfo<'_>` and `AccountInfo<'_>` have similar names, but are actually distinct types
+note: `AccountInfo<'_>` is defined in crate `solana_account_info`
+   --> src/lib.rs:22:1
+note: `AccountInfo<'_>` is defined in crate `solana_account_info`
+   --> src/lib.rs:22:1
+    = note: perhaps two different versions of crate `solana_account_info` are being used?
+
+error[E0277]: `?` couldn't convert the error to `anchor_lang::error::Error`
+   --> src/util/token_2022.rs:291:6
+    |
+273 |   ) -> Result<()> {
+    |        ---------- expected `anchor_lang::error::Error` because of this
+274 |       // Burn a single token in user account
+275 | /     invoke(
+276 | |         &spl_token_2022::instruction::burn_checked(
+277 | |             token_2022_program.key,
+278 | |             position_token_account.to_account_info().key,
+...   |
+290 | |         ],
+291 | |     )?;
+    | |     -^ the trait `From<solana_program::program_error::ProgramError>` is not implemented for `anchor_lang::error::Error`
+    | |_____|
+    |       this can't be annotated with `?` because it has type `Result<_, solana_program::program_error::ProgramError>`
+    |
+    = note: the question mark operation (`?`) implicitly performs a conversion on the error value using the `From` trait
+    = help: the following other types implement trait `From<T>`:
+              `anchor_lang::error::Error` implements `From<ProgramErrorWithOrigin>`
+              `anchor_lang::error::Error` implements `From<TryFromIntError>`
+              `anchor_lang::error::Error` implements `From<anchor_lang::error::AnchorError>`
+              `anchor_lang::error::Error` implements `From<anchor_lang::error::ErrorCode>`
+              `anchor_lang::error::Error` implements `From<anchor_lang::prelude::ProgramError>`
+              `anchor_lang::error::Error` implements `From<errors::ErrorCode>`
+              `anchor_lang::error::Error` implements `From<std::io::Error>`
+    = note: required for `std::result::Result<(), anchor_lang::error::Error>` to implement `FromResidual<std::result::Result<Infallible, solana_program::program_error::ProgramError>>`
+
+error[E0308]: `?` operator has incompatible types
+   --> src/util/token_2022.rs:295:10
+    |
+295 |           &spl_token_2022::instruction::close_account(
+    |  __________^
+296 | |             token_2022_program.key,
+297 | |             position_token_account.to_account_info().key,
+298 | |             receiver.key,
+299 | |             token_authority.key,
+300 | |             &[],
+301 | |         )?,
+    | |__________^ expected `Instruction`, found a different `Instruction`
+    |
+    = note: `?` operator cannot convert from `anchor_lang::solana_program::instruction::Instruction` to `solana_program::instruction::Instruction`
+    = note: `Instruction` and `Instruction` have similar names, but are actually distinct types
+note: `Instruction` is defined in crate `solana_instruction`
+   --> src/lib.rs:97:1
+note: `Instruction` is defined in crate `solana_instruction`
+   --> src/lib.rs:94:1
+    = note: perhaps two different versions of crate `solana_instruction` are being used?
+
+error[E0308]: mismatched types
+   --> src/util/token_2022.rs:303:13
+    |
+303 |             token_2022_program.to_account_info(),
+    |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ expected `AccountInfo<'_>`, found a different `AccountInfo<'_>`
+    |
+    = note: `AccountInfo<'_>` and `AccountInfo<'_>` have similar names, but are actually distinct types
+note: `AccountInfo<'_>` is defined in crate `solana_account_info`
+   --> src/lib.rs:22:1
+note: `AccountInfo<'_>` is defined in crate `solana_account_info`
+   --> src/lib.rs:22:1
+    = note: perhaps two different versions of crate `solana_account_info` are being used?
+
+error[E0277]: `?` couldn't convert the error to `anchor_lang::error::Error`
+   --> src/util/token_2022.rs:308:6
+    |
+273 |   ) -> Result<()> {
+    |        ---------- expected `anchor_lang::error::Error` because of this
+...
+294 | /     invoke(
+295 | |         &spl_token_2022::instruction::close_account(
+296 | |             token_2022_program.key,
+297 | |             position_token_account.to_account_info().key,
+...   |
+307 | |         ],
+308 | |     )?;
+    | |     -^ the trait `From<solana_program::program_error::ProgramError>` is not implemented for `anchor_lang::error::Error`
+    | |_____|
+    |       this can't be annotated with `?` because it has type `Result<_, solana_program::program_error::ProgramError>`
+    |
+    = note: the question mark operation (`?`) implicitly performs a conversion on the error value using the `From` trait
+    = help: the following other types implement trait `From<T>`:
+              `anchor_lang::error::Error` implements `From<ProgramErrorWithOrigin>`
+              `anchor_lang::error::Error` implements `From<TryFromIntError>`
+              `anchor_lang::error::Error` implements `From<anchor_lang::error::AnchorError>`
+              `anchor_lang::error::Error` implements `From<anchor_lang::error::ErrorCode>`
+              `anchor_lang::error::Error` implements `From<anchor_lang::prelude::ProgramError>`
+              `anchor_lang::error::Error` implements `From<errors::ErrorCode>`
+              `anchor_lang::error::Error` implements `From<std::io::Error>`
+    = note: required for `std::result::Result<(), anchor_lang::error::Error>` to implement `FromResidual<std::result::Result<Infallible, solana_program::program_error::ProgramError>>`
+
+error[E0308]: `?` operator has incompatible types
+   --> src/util/token_2022.rs:312:10
+    |
+312 |           &spl_token_2022::instruction::close_account(
+    |  __________^
+313 | |             token_2022_program.key,
+314 | |             position_mint.to_account_info().key,
+315 | |             receiver.key,
+316 | |             &position.key(),
+317 | |             &[],
+318 | |         )?,
+    | |__________^ expected `Instruction`, found a different `Instruction`
+    |
+    = note: `?` operator cannot convert from `anchor_lang::solana_program::instruction::Instruction` to `solana_program::instruction::Instruction`
+    = note: `Instruction` and `Instruction` have similar names, but are actually distinct types
+note: `Instruction` is defined in crate `solana_instruction`
+   --> src/lib.rs:97:1
+note: `Instruction` is defined in crate `solana_instruction`
+   --> src/lib.rs:94:1
+    = note: perhaps two different versions of crate `solana_instruction` are being used?
+
+error[E0308]: mismatched types
+   --> src/util/token_2022.rs:320:13
+    |
+320 |             token_2022_program.to_account_info(),
+    |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ expected `AccountInfo<'_>`, found a different `AccountInfo<'_>`
+    |
+    = note: `AccountInfo<'_>` and `AccountInfo<'_>` have similar names, but are actually distinct types
+note: `AccountInfo<'_>` is defined in crate `solana_account_info`
+   --> src/lib.rs:22:1
+note: `AccountInfo<'_>` is defined in crate `solana_account_info`
+   --> src/lib.rs:22:1
+    = note: perhaps two different versions of crate `solana_account_info` are being used?
+
+error[E0277]: `?` couldn't convert the error to `anchor_lang::error::Error`
+   --> src/util/token_2022.rs:326:6
+    |
+273 |   ) -> Result<()> {
+    |        ---------- expected `anchor_lang::error::Error` because of this
+...
+311 | /     invoke_signed(
+312 | |         &spl_token_2022::instruction::close_account(
+313 | |             token_2022_program.key,
+314 | |             position_mint.to_account_info().key,
+...   |
+325 | |         &[position_seeds],
+326 | |     )?;
+    | |     -^ the trait `From<solana_program::program_error::ProgramError>` is not implemented for `anchor_lang::error::Error`
+    | |_____|
+    |       this can't be annotated with `?` because it has type `Result<_, solana_program::program_error::ProgramError>`
+    |
+    = note: the question mark operation (`?`) implicitly performs a conversion on the error value using the `From` trait
+    = help: the following other types implement trait `From<T>`:
+              `anchor_lang::error::Error` implements `From<ProgramErrorWithOrigin>`
+              `anchor_lang::error::Error` implements `From<TryFromIntError>`
+              `anchor_lang::error::Error` implements `From<anchor_lang::error::AnchorError>`
+              `anchor_lang::error::Error` implements `From<anchor_lang::error::ErrorCode>`
+              `anchor_lang::error::Error` implements `From<anchor_lang::prelude::ProgramError>`
+              `anchor_lang::error::Error` implements `From<errors::ErrorCode>`
+              `anchor_lang::error::Error` implements `From<std::io::Error>`
+    = note: required for `std::result::Result<(), anchor_lang::error::Error>` to implement `FromResidual<std::result::Result<Infallible, solana_program::program_error::ProgramError>>`
+
+error[E0308]: `?` operator has incompatible types
+   --> src/util/token_2022.rs:367:10
+    |
+367 |           &spl_token_2022::instruction::freeze_account(
+    |  __________^
+368 | |             token_2022_program.key,
+369 | |             position_token_account.to_account_info().key,
+370 | |             position_mint.to_account_info().key,
+371 | |             &position.key(),
+372 | |             &[],
+373 | |         )?,
+    | |__________^ expected `Instruction`, found a different `Instruction`
+    |
+    = note: `?` operator cannot convert from `anchor_lang::solana_program::instruction::Instruction` to `solana_program::instruction::Instruction`
+    = note: `Instruction` and `Instruction` have similar names, but are actually distinct types
+note: `Instruction` is defined in crate `solana_instruction`
+   --> src/lib.rs:97:1
+note: `Instruction` is defined in crate `solana_instruction`
+   --> src/lib.rs:94:1
+    = note: perhaps two different versions of crate `solana_instruction` are being used?
+
+error[E0308]: mismatched types
+   --> src/util/token_2022.rs:375:13
+    |
+375 |             token_2022_program.to_account_info(),
+    |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ expected `AccountInfo<'_>`, found a different `AccountInfo<'_>`
+    |
+    = note: `AccountInfo<'_>` and `AccountInfo<'_>` have similar names, but are actually distinct types
+note: `AccountInfo<'_>` is defined in crate `solana_account_info`
+   --> src/lib.rs:22:1
+note: `AccountInfo<'_>` is defined in crate `solana_account_info`
+   --> src/lib.rs:22:1
+    = note: perhaps two different versions of crate `solana_account_info` are being used?
+
+error[E0277]: `?` couldn't convert the error to `anchor_lang::error::Error`
+   --> src/util/token_2022.rs:381:6
+    |
+364 |   ) -> Result<()> {
+    |        ---------- expected `anchor_lang::error::Error` because of this
+365 |       // Note: Token-2022 program rejects the freeze instruction if the account is already frozen.
+366 | /     invoke_signed(
+367 | |         &spl_token_2022::instruction::freeze_account(
+368 | |             token_2022_program.key,
+369 | |             position_token_account.to_account_info().key,
+...   |
+380 | |         &[position_seeds],
+381 | |     )?;
+    | |     -^ the trait `From<solana_program::program_error::ProgramError>` is not implemented for `anchor_lang::error::Error`
+    | |_____|
+    |       this can't be annotated with `?` because it has type `Result<_, solana_program::program_error::ProgramError>`
+    |
+    = note: the question mark operation (`?`) implicitly performs a conversion on the error value using the `From` trait
+    = help: the following other types implement trait `From<T>`:
+              `anchor_lang::error::Error` implements `From<ProgramErrorWithOrigin>`
+              `anchor_lang::error::Error` implements `From<TryFromIntError>`
+              `anchor_lang::error::Error` implements `From<anchor_lang::error::AnchorError>`
+              `anchor_lang::error::Error` implements `From<anchor_lang::error::ErrorCode>`
+              `anchor_lang::error::Error` implements `From<anchor_lang::prelude::ProgramError>`
+              `anchor_lang::error::Error` implements `From<errors::ErrorCode>`
+              `anchor_lang::error::Error` implements `From<std::io::Error>`
+    = note: required for `std::result::Result<(), anchor_lang::error::Error>` to implement `FromResidual<std::result::Result<Infallible, solana_program::program_error::ProgramError>>`
+
+error[E0308]: `?` operator has incompatible types
+   --> src/util/token_2022.rs:395:10
+    |
+395 |           &spl_token_2022::instruction::thaw_account(
+    |  __________^
+396 | |             token_2022_program.key,
+397 | |             position_token_account.to_account_info().key,
+398 | |             position_mint.to_account_info().key,
+399 | |             &position.key(),
+400 | |             &[],
+401 | |         )?,
+    | |__________^ expected `Instruction`, found a different `Instruction`
+    |
+    = note: `?` operator cannot convert from `anchor_lang::solana_program::instruction::Instruction` to `solana_program::instruction::Instruction`
+    = note: `Instruction` and `Instruction` have similar names, but are actually distinct types
+note: `Instruction` is defined in crate `solana_instruction`
+   --> src/lib.rs:97:1
+note: `Instruction` is defined in crate `solana_instruction`
+   --> src/lib.rs:94:1
+    = note: perhaps two different versions of crate `solana_instruction` are being used?
+
+error[E0308]: mismatched types
+   --> src/util/token_2022.rs:403:13
+    |
+403 |             token_2022_program.to_account_info(),
+    |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ expected `AccountInfo<'_>`, found a different `AccountInfo<'_>`
+    |
+    = note: `AccountInfo<'_>` and `AccountInfo<'_>` have similar names, but are actually distinct types
+note: `AccountInfo<'_>` is defined in crate `solana_account_info`
+   --> src/lib.rs:22:1
+note: `AccountInfo<'_>` is defined in crate `solana_account_info`
+   --> src/lib.rs:22:1
+    = note: perhaps two different versions of crate `solana_account_info` are being used?
+
+error[E0277]: `?` couldn't convert the error to `anchor_lang::error::Error`
+   --> src/util/token_2022.rs:409:6
+    |
+392 |   ) -> Result<()> {
+    |        ---------- expected `anchor_lang::error::Error` because of this
+393 |       // Note: Token-2022 program rejects the unfreeze instruction if the account is not frozen.
+394 | /     invoke_signed(
+395 | |         &spl_token_2022::instruction::thaw_account(
+396 | |             token_2022_program.key,
+397 | |             position_token_account.to_account_info().key,
+...   |
+408 | |         &[position_seeds],
+409 | |     )?;
+    | |     -^ the trait `From<solana_program::program_error::ProgramError>` is not implemented for `anchor_lang::error::Error`
+    | |_____|
+    |       this can't be annotated with `?` because it has type `Result<_, solana_program::program_error::ProgramError>`
+    |
+    = note: the question mark operation (`?`) implicitly performs a conversion on the error value using the `From` trait
+    = help: the following other types implement trait `From<T>`:
+              `anchor_lang::error::Error` implements `From<ProgramErrorWithOrigin>`
+              `anchor_lang::error::Error` implements `From<TryFromIntError>`
+              `anchor_lang::error::Error` implements `From<anchor_lang::error::AnchorError>`
+              `anchor_lang::error::Error` implements `From<anchor_lang::error::ErrorCode>`
+              `anchor_lang::error::Error` implements `From<anchor_lang::prelude::ProgramError>`
+              `anchor_lang::error::Error` implements `From<errors::ErrorCode>`
+              `anchor_lang::error::Error` implements `From<std::io::Error>`
+    = note: required for `std::result::Result<(), anchor_lang::error::Error>` to implement `FromResidual<std::result::Result<Infallible, solana_program::program_error::ProgramError>>`
+
+error[E0308]: `?` operator has incompatible types
+   --> src/util/token_2022.rs:422:10
+    |
+422 |           &spl_token_2022::instruction::transfer_checked(
+    |  __________^
+423 | |             token_2022_program.key,
+424 | |             position_token_account.to_account_info().key,
+425 | |             position_mint.to_account_info().key,
+...   |
+430 | |             position_mint.decimals,
+431 | |         )?,
+    | |__________^ expected `Instruction`, found a different `Instruction`
+    |
+    = note: `?` operator cannot convert from `anchor_lang::solana_program::instruction::Instruction` to `solana_program::instruction::Instruction`
+    = note: `Instruction` and `Instruction` have similar names, but are actually distinct types
+note: `Instruction` is defined in crate `solana_instruction`
+   --> src/lib.rs:97:1
+note: `Instruction` is defined in crate `solana_instruction`
+   --> src/lib.rs:94:1
+    = note: perhaps two different versions of crate `solana_instruction` are being used?
+
+error[E0308]: mismatched types
+   --> src/util/token_2022.rs:433:13
+    |
+433 |             token_2022_program.to_account_info(),
+    |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ expected `AccountInfo<'_>`, found a different `AccountInfo<'_>`
+    |
+    = note: `AccountInfo<'_>` and `AccountInfo<'_>` have similar names, but are actually distinct types
+note: `AccountInfo<'_>` is defined in crate `solana_account_info`
+   --> src/lib.rs:22:1
+note: `AccountInfo<'_>` is defined in crate `solana_account_info`
+   --> src/lib.rs:22:1
+    = note: perhaps two different versions of crate `solana_account_info` are being used?
+
+error[E0277]: `?` couldn't convert the error to `anchor_lang::error::Error`
+   --> src/util/token_2022.rs:439:6
+    |
+420 |   ) -> Result<()> {
+    |        ---------- expected `anchor_lang::error::Error` because of this
+421 | /     invoke(
+422 | |         &spl_token_2022::instruction::transfer_checked(
+423 | |             token_2022_program.key,
+424 | |             position_token_account.to_account_info().key,
+...   |
+438 | |         ],
+439 | |     )?;
+    | |     -^ the trait `From<solana_program::program_error::ProgramError>` is not implemented for `anchor_lang::error::Error`
+    | |_____|
+    |       this can't be annotated with `?` because it has type `Result<_, solana_program::program_error::ProgramError>`
+    |
+    = note: the question mark operation (`?`) implicitly performs a conversion on the error value using the `From` trait
+    = help: the following other types implement trait `From<T>`:
+              `anchor_lang::error::Error` implements `From<ProgramErrorWithOrigin>`
+              `anchor_lang::error::Error` implements `From<TryFromIntError>`
+              `anchor_lang::error::Error` implements `From<anchor_lang::error::AnchorError>`
+              `anchor_lang::error::Error` implements `From<anchor_lang::error::ErrorCode>`
+              `anchor_lang::error::Error` implements `From<anchor_lang::prelude::ProgramError>`
+              `anchor_lang::error::Error` implements `From<errors::ErrorCode>`
+              `anchor_lang::error::Error` implements `From<std::io::Error>`
+    = note: required for `std::result::Result<(), anchor_lang::error::Error>` to implement `FromResidual<std::result::Result<Infallible, solana_program::program_error::ProgramError>>`
+
+error[E0308]: `?` operator has incompatible types
+   --> src/util/token_2022.rs:450:10
+    |
+450 |           &spl_token_2022::instruction::close_account(
+    |  __________^
+451 | |             token_2022_program.key,
+452 | |             token_account.to_account_info().key,
+453 | |             receiver.key,
+454 | |             token_authority.key,
+455 | |             &[],
+456 | |         )?,
+    | |__________^ expected `Instruction`, found a different `Instruction`
+    |
+    = note: `?` operator cannot convert from `anchor_lang::solana_program::instruction::Instruction` to `solana_program::instruction::Instruction`
+    = note: `Instruction` and `Instruction` have similar names, but are actually distinct types
+note: `Instruction` is defined in crate `solana_instruction`
+   --> src/lib.rs:97:1
+note: `Instruction` is defined in crate `solana_instruction`
+   --> src/lib.rs:94:1
+    = note: perhaps two different versions of crate `solana_instruction` are being used?
+
+error[E0308]: mismatched types
+   --> src/util/token_2022.rs:458:13
+    |
+458 |             token_2022_program.to_account_info(),
+    |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ expected `AccountInfo<'_>`, found a different `AccountInfo<'_>`
+    |
+    = note: `AccountInfo<'_>` and `AccountInfo<'_>` have similar names, but are actually distinct types
+note: `AccountInfo<'_>` is defined in crate `solana_account_info`
+   --> src/lib.rs:22:1
+note: `AccountInfo<'_>` is defined in crate `solana_account_info`
+   --> src/lib.rs:22:1
+    = note: perhaps two different versions of crate `solana_account_info` are being used?
+
+error[E0277]: `?` couldn't convert the error to `anchor_lang::error::Error`
+   --> src/util/token_2022.rs:463:6
+    |
+448 |   ) -> Result<()> {
+    |        ---------- expected `anchor_lang::error::Error` because of this
+449 | /     invoke(
+450 | |         &spl_token_2022::instruction::close_account(
+451 | |             token_2022_program.key,
+452 | |             token_account.to_account_info().key,
+...   |
+462 | |         ],
+463 | |     )?;
+    | |     -^ the trait `From<solana_program::program_error::ProgramError>` is not implemented for `anchor_lang::error::Error`
+    | |_____|
+    |       this can't be annotated with `?` because it has type `Result<_, solana_program::program_error::ProgramError>`
+    |
+    = note: the question mark operation (`?`) implicitly performs a conversion on the error value using the `From` trait
+    = help: the following other types implement trait `From<T>`:
+              `anchor_lang::error::Error` implements `From<ProgramErrorWithOrigin>`
+              `anchor_lang::error::Error` implements `From<TryFromIntError>`
+              `anchor_lang::error::Error` implements `From<anchor_lang::error::AnchorError>`
+              `anchor_lang::error::Error` implements `From<anchor_lang::error::ErrorCode>`
+              `anchor_lang::error::Error` implements `From<anchor_lang::prelude::ProgramError>`
+              `anchor_lang::error::Error` implements `From<errors::ErrorCode>`
+              `anchor_lang::error::Error` implements `From<std::io::Error>`
+    = note: required for `std::result::Result<(), anchor_lang::error::Error>` to implement `FromResidual<std::result::Result<Infallible, solana_program::program_error::ProgramError>>`
+
+error[E0308]: `?` operator has incompatible types
+   --> src/util/token_2022.rs:517:14
+    |
+517 |               &spl_token_2022::instruction::initialize_immutable_owner(
+    |  ______________^
+518 | |                 token_program.key,
+519 | |                 vault_token_account.key,
+520 | |             )?,
+    | |______________^ expected `Instruction`, found a different `Instruction`
+    |
+    = note: `?` operator cannot convert from `anchor_lang::solana_program::instruction::Instruction` to `solana_program::instruction::Instruction`
+    = note: `Instruction` and `Instruction` have similar names, but are actually distinct types
+note: `Instruction` is defined in crate `solana_instruction`
+   --> src/lib.rs:97:1
+note: `Instruction` is defined in crate `solana_instruction`
+   --> src/lib.rs:94:1
+    = note: perhaps two different versions of crate `solana_instruction` are being used?
+
+error[E0308]: mismatched types
+   --> src/util/token_2022.rs:522:17
+    |
+522 |                 token_program.to_account_info(),
+    |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ expected `AccountInfo<'_>`, found a different `AccountInfo<'_>`
+    |
+    = note: `AccountInfo<'_>` and `AccountInfo<'_>` have similar names, but are actually distinct types
+note: `AccountInfo<'_>` is defined in crate `solana_account_info`
+   --> src/lib.rs:22:1
+note: `AccountInfo<'_>` is defined in crate `solana_account_info`
+   --> src/lib.rs:22:1
+    = note: perhaps two different versions of crate `solana_account_info` are being used?
+
+error[E0277]: `?` couldn't convert the error to `anchor_lang::error::Error`
+   --> src/util/token_2022.rs:525:10
+    |
+477 |   ) -> Result<()> {
+    |        ---------- expected `anchor_lang::error::Error` because of this
+...
+516 | /         invoke(
+517 | |             &spl_token_2022::instruction::initialize_immutable_owner(
+518 | |                 token_program.key,
+519 | |                 vault_token_account.key,
+...   |
+524 | |             ],
+525 | |         )?;
+    | |         -^ the trait `From<solana_program::program_error::ProgramError>` is not implemented for `anchor_lang::error::Error`
+    | |_________|
+    |           this can't be annotated with `?` because it has type `Result<_, solana_program::program_error::ProgramError>`
+    |
+    = note: the question mark operation (`?`) implicitly performs a conversion on the error value using the `From` trait
+    = help: the following other types implement trait `From<T>`:
+              `anchor_lang::error::Error` implements `From<ProgramErrorWithOrigin>`
+              `anchor_lang::error::Error` implements `From<TryFromIntError>`
+              `anchor_lang::error::Error` implements `From<anchor_lang::error::AnchorError>`
+              `anchor_lang::error::Error` implements `From<anchor_lang::error::ErrorCode>`
+              `anchor_lang::error::Error` implements `From<anchor_lang::prelude::ProgramError>`
+              `anchor_lang::error::Error` implements `From<errors::ErrorCode>`
+              `anchor_lang::error::Error` implements `From<std::io::Error>`
+    = note: required for `std::result::Result<(), anchor_lang::error::Error>` to implement `FromResidual<std::result::Result<Infallible, solana_program::program_error::ProgramError>>`
+
+error[E0308]: `?` operator has incompatible types
+   --> src/util/token_2022.rs:530:10
+    |
+530 |           &spl_token_2022::instruction::initialize_account3(
+    |  __________^
+531 | |             token_program.key,
+532 | |             vault_token_account.key,
+533 | |             &vault_mint.key(),
+534 | |             &whirlpool.key(),
+535 | |         )?,
+    | |__________^ expected `Instruction`, found a different `Instruction`
+    |
+    = note: `?` operator cannot convert from `anchor_lang::solana_program::instruction::Instruction` to `solana_program::instruction::Instruction`
+    = note: `Instruction` and `Instruction` have similar names, but are actually distinct types
+note: `Instruction` is defined in crate `solana_instruction`
+   --> src/lib.rs:97:1
+note: `Instruction` is defined in crate `solana_instruction`
+   --> src/lib.rs:94:1
+    = note: perhaps two different versions of crate `solana_instruction` are being used?
+
+error[E0308]: mismatched types
+   --> src/util/token_2022.rs:537:13
+    |
+537 |             token_program.to_account_info(),
+    |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ expected `AccountInfo<'_>`, found a different `AccountInfo<'_>`
+    |
+    = note: `AccountInfo<'_>` and `AccountInfo<'_>` have similar names, but are actually distinct types
+note: `AccountInfo<'_>` is defined in crate `solana_account_info`
+   --> src/lib.rs:22:1
+note: `AccountInfo<'_>` is defined in crate `solana_account_info`
+   --> src/lib.rs:22:1
+    = note: perhaps two different versions of crate `solana_account_info` are being used?
+
+error[E0277]: `?` couldn't convert the error to `anchor_lang::error::Error`
+   --> src/util/token_2022.rs:542:6
+    |
+477 |   ) -> Result<()> {
+    |        ---------- expected `anchor_lang::error::Error` because of this
+...
+529 | /     invoke(
+530 | |         &spl_token_2022::instruction::initialize_account3(
+531 | |             token_program.key,
+532 | |             vault_token_account.key,
+...   |
+541 | |         ],
+542 | |     )?;
+    | |     -^ the trait `From<solana_program::program_error::ProgramError>` is not implemented for `anchor_lang::error::Error`
+    | |_____|
+    |       this can't be annotated with `?` because it has type `Result<_, solana_program::program_error::ProgramError>`
+    |
+    = note: the question mark operation (`?`) implicitly performs a conversion on the error value using the `From` trait
+    = help: the following other types implement trait `From<T>`:
+              `anchor_lang::error::Error` implements `From<ProgramErrorWithOrigin>`
+              `anchor_lang::error::Error` implements `From<TryFromIntError>`
+              `anchor_lang::error::Error` implements `From<anchor_lang::error::AnchorError>`
+              `anchor_lang::error::Error` implements `From<anchor_lang::error::ErrorCode>`
+              `anchor_lang::error::Error` implements `From<anchor_lang::prelude::ProgramError>`
+              `anchor_lang::error::Error` implements `From<errors::ErrorCode>`
+              `anchor_lang::error::Error` implements `From<std::io::Error>`
+    = note: required for `std::result::Result<(), anchor_lang::error::Error>` to implement `FromResidual<std::result::Result<Infallible, solana_program::program_error::ProgramError>>`
+
+error[E0308]: arguments to this function are incorrect
+  --> src/util/v2/token.rs:75:9
+   |
+75 |         spl_transfer_hook_interface::onchain::add_extra_accounts_for_execute_cpi(
+   |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+76 |             &mut instruction,
+   |             ---------------- expected `Instruction`, found a different `Instruction`
+77 |             &mut account_infos,
+78 |             &hook_program_id,
+   |             ---------------- expected `&__Pubkey`, found `&Pubkey`
+79 |             // owner to vault
+80 |             token_owner_account.to_account_info(), // from (owner account)
+   |             ------------------------------------- expected `AccountInfo<'_>`, found a different `AccountInfo<'_>`
+81 |             token_mint.to_account_info(),          // mint
+   |             ---------------------------- expected `AccountInfo<'_>`, found a different `AccountInfo<'_>`
+82 |             token_vault.to_account_info(),         // to (vault account)
+   |             ----------------------------- expected `AccountInfo<'_>`, found a different `AccountInfo<'_>`
+83 |             authority.to_account_info(),           // authority (owner)
+   |             --------------------------- expected `AccountInfo<'_>`, found a different `AccountInfo<'_>`
+   |
+   = note: `Instruction` and `Instruction` have similar names, but are actually distinct types
+note: `Instruction` is defined in crate `solana_instruction`
+  --> src/lib.rs:97:1
+note: `Instruction` is defined in crate `solana_instruction`
+  --> src/lib.rs:94:1
+   = note: perhaps two different versions of crate `solana_instruction` are being used?
+note: expected `AccountInfo<'_>`, found a different `AccountInfo<'_>`
+  --> src/util/v2/token.rs:77:13
+   |
+77 |             &mut account_infos,
+   |             ^^^^^^^^^^^^^^^^^^
+   = note: `AccountInfo<'_>` and `AccountInfo<'_>` have similar names, but are actually distinct types
+note: `AccountInfo<'_>` is defined in crate `solana_account_info`
+  --> src/lib.rs:22:1
+note: `AccountInfo<'_>` is defined in crate `solana_account_info`
+  --> src/lib.rs:22:1
+   = note: perhaps two different versions of crate `solana_account_info` are being used?
+   = note: expected reference `&solana_program::solana_program_entrypoint::__Pubkey`
+              found reference `&anchor_lang::prelude::Pubkey`
+   = note: `AccountInfo<'_>` and `AccountInfo<'_>` have similar names, but are actually distinct types
+note: `AccountInfo<'_>` is defined in crate `solana_account_info`
+  --> src/lib.rs:22:1
+note: `AccountInfo<'_>` is defined in crate `solana_account_info`
+  --> src/lib.rs:22:1
+   = note: perhaps two different versions of crate `solana_account_info` are being used?
+   = note: `AccountInfo<'_>` and `AccountInfo<'_>` have similar names, but are actually distinct types
+note: `AccountInfo<'_>` is defined in crate `solana_account_info`
+  --> src/lib.rs:22:1
+note: `AccountInfo<'_>` is defined in crate `solana_account_info`
+  --> src/lib.rs:22:1
+   = note: perhaps two different versions of crate `solana_account_info` are being used?
+   = note: `AccountInfo<'_>` and `AccountInfo<'_>` have similar names, but are actually distinct types
+note: `AccountInfo<'_>` is defined in crate `solana_account_info`
+  --> src/lib.rs:22:1
+note: `AccountInfo<'_>` is defined in crate `solana_account_info`
+  --> src/lib.rs:22:1
+   = note: perhaps two different versions of crate `solana_account_info` are being used?
+   = note: `AccountInfo<'_>` and `AccountInfo<'_>` have similar names, but are actually distinct types
+note: `AccountInfo<'_>` is defined in crate `solana_account_info`
+  --> src/lib.rs:22:1
+note: `AccountInfo<'_>` is defined in crate `solana_account_info`
+  --> src/lib.rs:22:1
+   = note: perhaps two different versions of crate `solana_account_info` are being used?
+note: expected `AccountInfo<'_>`, found `AccountInfo<'info>`
+  --> src/util/v2/token.rs:85:13
+   |
+85 |             transfer_hook_accounts,
+   |             ^^^^^^^^^^^^^^^^^^^^^^
+   = note: `AccountInfo<'info>` and `AccountInfo<'_>` have similar names, but are actually distinct types
+note: `AccountInfo<'info>` is defined in crate `solana_account_info`
+  --> src/lib.rs:22:1
+note: `AccountInfo<'_>` is defined in crate `solana_account_info`
+  --> src/lib.rs:22:1
+   = note: perhaps two different versions of crate `solana_account_info` are being used?
+note: function defined here
+  --> src/onchain.rs:67:8
+
+error[E0277]: `?` couldn't convert the error to `anchor_lang::error::Error`
+  --> src/util/v2/token.rs:86:10
+   |
+29 |   ) -> Result<()> {
+   |        ---------- expected `anchor_lang::error::Error` because of this
+...
+75 | /         spl_transfer_hook_interface::onchain::add_extra_accounts_for_execute_cpi(
+76 | |             &mut instruction,
+77 | |             &mut account_infos,
+78 | |             &hook_program_id,
+...  |
+85 | |             transfer_hook_accounts,
+86 | |         )?;
+   | |         -^ the trait `From<solana_program::program_error::ProgramError>` is not implemented for `anchor_lang::error::Error`
+   | |_________|
+   |           this can't be annotated with `?` because it has type `Result<_, solana_program::program_error::ProgramError>`
+   |
+   = note: the question mark operation (`?`) implicitly performs a conversion on the error value using the `From` trait
+   = help: the following other types implement trait `From<T>`:
+             `anchor_lang::error::Error` implements `From<ProgramErrorWithOrigin>`
+             `anchor_lang::error::Error` implements `From<TryFromIntError>`
+             `anchor_lang::error::Error` implements `From<anchor_lang::error::AnchorError>`
+             `anchor_lang::error::Error` implements `From<anchor_lang::error::ErrorCode>`
+             `anchor_lang::error::Error` implements `From<anchor_lang::prelude::ProgramError>`
+             `anchor_lang::error::Error` implements `From<errors::ErrorCode>`
+             `anchor_lang::error::Error` implements `From<std::io::Error>`
+   = note: required for `std::result::Result<(), anchor_lang::error::Error>` to implement `FromResidual<std::result::Result<Infallible, solana_program::program_error::ProgramError>>`
+
+error[E0308]: arguments to this function are incorrect
+  --> src/util/v2/token.rs:89:5
+   |
+89 |     solana_program::program::invoke_signed(&instruction, &account_infos, &[])?;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ ------------ expected `Instruction`, found a different `Instruction`
+   |
+   = note: `Instruction` and `Instruction` have similar names, but are actually distinct types
+note: `Instruction` is defined in crate `solana_instruction`
+  --> src/lib.rs:97:1
+note: `Instruction` is defined in crate `solana_instruction`
+  --> src/lib.rs:94:1
+   = note: perhaps two different versions of crate `solana_instruction` are being used?
+note: expected `&[AccountInfo<'_>]`, found `&Vec<AccountInfo<'_>>`
+  --> src/util/v2/token.rs:89:58
+   |
+89 |     solana_program::program::invoke_signed(&instruction, &account_infos, &[])?;
+   |                                                          ^^^^^^^^^^^^^^
+   = note: expected reference `&[solana_program::solana_account_info::AccountInfo<'_>]`
+              found reference `&Vec<anchor_lang::prelude::AccountInfo<'_>>`
+note: function defined here
+  --> src/program.rs:48:8
+
+error[E0277]: `?` couldn't convert the error to `anchor_lang::error::Error`
+  --> src/util/v2/token.rs:89:78
+   |
+29 | ) -> Result<()> {
+   |      ---------- expected `anchor_lang::error::Error` because of this
+...
+89 |     solana_program::program::invoke_signed(&instruction, &account_infos, &[])?;
+   |     -------------------------------------------------------------------------^ the trait `From<solana_program::program_error::ProgramError>` is not implemented for `anchor_lang::error::Error`
+   |     |
+   |     this can't be annotated with `?` because it has type `Result<_, solana_program::program_error::ProgramError>`
+   |
+   = note: the question mark operation (`?`) implicitly performs a conversion on the error value using the `From` trait
+   = help: the following other types implement trait `From<T>`:
+             `anchor_lang::error::Error` implements `From<ProgramErrorWithOrigin>`
+             `anchor_lang::error::Error` implements `From<TryFromIntError>`
+             `anchor_lang::error::Error` implements `From<anchor_lang::error::AnchorError>`
+             `anchor_lang::error::Error` implements `From<anchor_lang::error::ErrorCode>`
+             `anchor_lang::error::Error` implements `From<anchor_lang::prelude::ProgramError>`
+             `anchor_lang::error::Error` implements `From<errors::ErrorCode>`
+             `anchor_lang::error::Error` implements `From<std::io::Error>`
+   = note: required for `std::result::Result<(), anchor_lang::error::Error>` to implement `FromResidual<std::result::Result<Infallible, solana_program::program_error::ProgramError>>`
+
+error[E0308]: arguments to this function are incorrect
+   --> src/util/v2/token.rs:156:9
+    |
+156 |         spl_transfer_hook_interface::onchain::add_extra_accounts_for_execute_cpi(
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+157 |             &mut instruction,
+    |             ---------------- expected `Instruction`, found a different `Instruction`
+158 |             &mut account_infos,
+159 |             &hook_program_id,
+    |             ---------------- expected `&__Pubkey`, found `&Pubkey`
+160 |             // vault to owner
+161 |             token_vault.to_account_info(), // from (vault account)
+    |             ----------------------------- expected `AccountInfo<'_>`, found a different `AccountInfo<'_>`
+162 |             token_mint.to_account_info(),  // mint
+    |             ---------------------------- expected `AccountInfo<'_>`, found a different `AccountInfo<'_>`
+163 |             token_owner_account.to_account_info(), // to (owner account)
+    |             ------------------------------------- expected `AccountInfo<'_>`, found a different `AccountInfo<'_>`
+164 |             whirlpool.to_account_info(),   // authority (pool)
+    |             --------------------------- expected `AccountInfo<'_>`, found a different `AccountInfo<'_>`
+    |
+    = note: `Instruction` and `Instruction` have similar names, but are actually distinct types
+note: `Instruction` is defined in crate `solana_instruction`
+   --> src/lib.rs:97:1
+note: `Instruction` is defined in crate `solana_instruction`
+   --> src/lib.rs:94:1
+    = note: perhaps two different versions of crate `solana_instruction` are being used?
+note: expected `AccountInfo<'_>`, found a different `AccountInfo<'_>`
+   --> src/util/v2/token.rs:158:13
+    |
+158 |             &mut account_infos,
+    |             ^^^^^^^^^^^^^^^^^^
+    = note: `AccountInfo<'_>` and `AccountInfo<'_>` have similar names, but are actually distinct types
+note: `AccountInfo<'_>` is defined in crate `solana_account_info`
+   --> src/lib.rs:22:1
+note: `AccountInfo<'_>` is defined in crate `solana_account_info`
+   --> src/lib.rs:22:1
+    = note: perhaps two different versions of crate `solana_account_info` are being used?
+    = note: expected reference `&solana_program::solana_program_entrypoint::__Pubkey`
+               found reference `&anchor_lang::prelude::Pubkey`
+    = note: `AccountInfo<'_>` and `AccountInfo<'_>` have similar names, but are actually distinct types
+note: `AccountInfo<'_>` is defined in crate `solana_account_info`
+   --> src/lib.rs:22:1
+note: `AccountInfo<'_>` is defined in crate `solana_account_info`
+   --> src/lib.rs:22:1
+    = note: perhaps two different versions of crate `solana_account_info` are being used?
+    = note: `AccountInfo<'_>` and `AccountInfo<'_>` have similar names, but are actually distinct types
+note: `AccountInfo<'_>` is defined in crate `solana_account_info`
+   --> src/lib.rs:22:1
+note: `AccountInfo<'_>` is defined in crate `solana_account_info`
+   --> src/lib.rs:22:1
+    = note: perhaps two different versions of crate `solana_account_info` are being used?
+    = note: `AccountInfo<'_>` and `AccountInfo<'_>` have similar names, but are actually distinct types
+note: `AccountInfo<'_>` is defined in crate `solana_account_info`
+   --> src/lib.rs:22:1
+note: `AccountInfo<'_>` is defined in crate `solana_account_info`
+   --> src/lib.rs:22:1
+    = note: perhaps two different versions of crate `solana_account_info` are being used?
+    = note: `AccountInfo<'_>` and `AccountInfo<'_>` have similar names, but are actually distinct types
+note: `AccountInfo<'_>` is defined in crate `solana_account_info`
+   --> src/lib.rs:22:1
+note: `AccountInfo<'_>` is defined in crate `solana_account_info`
+   --> src/lib.rs:22:1
+    = note: perhaps two different versions of crate `solana_account_info` are being used?
+note: expected `AccountInfo<'_>`, found `AccountInfo<'info>`
+   --> src/util/v2/token.rs:166:13
+    |
+166 |             transfer_hook_accounts,
+    |             ^^^^^^^^^^^^^^^^^^^^^^
+    = note: `AccountInfo<'info>` and `AccountInfo<'_>` have similar names, but are actually distinct types
+note: `AccountInfo<'info>` is defined in crate `solana_account_info`
+   --> src/lib.rs:22:1
+note: `AccountInfo<'_>` is defined in crate `solana_account_info`
+   --> src/lib.rs:22:1
+    = note: perhaps two different versions of crate `solana_account_info` are being used?
+note: function defined here
+   --> src/onchain.rs:67:8
+
+error[E0277]: `?` couldn't convert the error to `anchor_lang::error::Error`
+   --> src/util/v2/token.rs:167:10
+    |
+105 |   ) -> Result<()> {
+    |        ---------- expected `anchor_lang::error::Error` because of this
+...
+156 | /         spl_transfer_hook_interface::onchain::add_extra_accounts_for_execute_cpi(
+157 | |             &mut instruction,
+158 | |             &mut account_infos,
+159 | |             &hook_program_id,
+...   |
+166 | |             transfer_hook_accounts,
+167 | |         )?;
+    | |         -^ the trait `From<solana_program::program_error::ProgramError>` is not implemented for `anchor_lang::error::Error`
+    | |_________|
+    |           this can't be annotated with `?` because it has type `Result<_, solana_program::program_error::ProgramError>`
+    |
+    = note: the question mark operation (`?`) implicitly performs a conversion on the error value using the `From` trait
+    = help: the following other types implement trait `From<T>`:
+              `anchor_lang::error::Error` implements `From<ProgramErrorWithOrigin>`
+              `anchor_lang::error::Error` implements `From<TryFromIntError>`
+              `anchor_lang::error::Error` implements `From<anchor_lang::error::AnchorError>`
+              `anchor_lang::error::Error` implements `From<anchor_lang::error::ErrorCode>`
+              `anchor_lang::error::Error` implements `From<anchor_lang::prelude::ProgramError>`
+              `anchor_lang::error::Error` implements `From<errors::ErrorCode>`
+              `anchor_lang::error::Error` implements `From<std::io::Error>`
+    = note: required for `std::result::Result<(), anchor_lang::error::Error>` to implement `FromResidual<std::result::Result<Infallible, solana_program::program_error::ProgramError>>`
+
+error[E0308]: arguments to this function are incorrect
+   --> src/util/v2/token.rs:170:5
+    |
+170 |     solana_program::program::invoke_signed(&instruction, &account_infos, &[&whirlpool.seeds()])?;
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ ------------ expected `Instruction`, found a different `Instruction`
+    |
+    = note: `Instruction` and `Instruction` have similar names, but are actually distinct types
+note: `Instruction` is defined in crate `solana_instruction`
+   --> src/lib.rs:97:1
+note: `Instruction` is defined in crate `solana_instruction`
+   --> src/lib.rs:94:1
+    = note: perhaps two different versions of crate `solana_instruction` are being used?
+note: expected `&[AccountInfo<'_>]`, found `&Vec<AccountInfo<'_>>`
+   --> src/util/v2/token.rs:170:58
+    |
+170 |     solana_program::program::invoke_signed(&instruction, &account_infos, &[&whirlpool.seeds()])?;
+    |                                                          ^^^^^^^^^^^^^^
+    = note: expected reference `&[solana_program::solana_account_info::AccountInfo<'_>]`
+               found reference `&Vec<anchor_lang::prelude::AccountInfo<'_>>`
+note: function defined here
+   --> src/program.rs:48:8
+
+error[E0277]: `?` couldn't convert the error to `anchor_lang::error::Error`
+   --> src/util/v2/token.rs:170:96
+    |
+105 | ) -> Result<()> {
+    |      ---------- expected `anchor_lang::error::Error` because of this
+...
+170 |     solana_program::program::invoke_signed(&instruction, &account_infos, &[&whirlpool.seeds()])?;
+    |     -------------------------------------------------------------------------------------------^ the trait `From<solana_program::program_error::ProgramError>` is not implemented for `anchor_lang::error::Error`
+    |     |
+    |     this can't be annotated with `?` because it has type `Result<_, solana_program::program_error::ProgramError>`
+    |
+    = note: the question mark operation (`?`) implicitly performs a conversion on the error value using the `From` trait
+    = help: the following other types implement trait `From<T>`:
+              `anchor_lang::error::Error` implements `From<ProgramErrorWithOrigin>`
+              `anchor_lang::error::Error` implements `From<TryFromIntError>`
+              `anchor_lang::error::Error` implements `From<anchor_lang::error::AnchorError>`
+              `anchor_lang::error::Error` implements `From<anchor_lang::error::ErrorCode>`
+              `anchor_lang::error::Error` implements `From<anchor_lang::prelude::ProgramError>`
+              `anchor_lang::error::Error` implements `From<errors::ErrorCode>`
+              `anchor_lang::error::Error` implements `From<std::io::Error>`
+    = note: required for `std::result::Result<(), anchor_lang::error::Error>` to implement `FromResidual<std::result::Result<Infallible, solana_program::program_error::ProgramError>>`
+
+Some errors have detailed explanations: E0277, E0308, E0432.
+For more information about an error, try `rustc --explain E0277`.
+warning: `whirlpool` (lib) generated 73 warnings (5 duplicates)
+error: could not compile `whirlpool` (lib) due to 94 previous errors; 73 warnings emitted

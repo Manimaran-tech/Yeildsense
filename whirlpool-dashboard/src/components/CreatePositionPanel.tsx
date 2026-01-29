@@ -21,6 +21,7 @@ interface CreatePositionPanelProps {
     poolAddress: string | null;
     tokenA: string;
     tokenB: string;
+    feeTier?: number;
 }
 
 type ViewMode = 'deposit' | 'range';
@@ -63,7 +64,8 @@ export const CreatePositionPanel: FC<CreatePositionPanelProps> = ({
     // Inco encryption state
     const [encryptedAmountA, setEncryptedAmountA] = useState<EncryptedAmount | null>(null);
     const [encryptedAmountB, setEncryptedAmountB] = useState<EncryptedAmount | null>(null);
-    const [_isEncrypting, setIsEncrypting] = useState(false);
+    const [isEncrypting, setIsEncrypting] = useState(false);
+    const [encryptionError, setEncryptionError] = useState<string | null>(null);
 
     // Fetch current price on mount
     useEffect(() => {
@@ -270,6 +272,8 @@ export const CreatePositionPanel: FC<CreatePositionPanelProps> = ({
                 setEncryptedAmountA(encrypted);
             } catch (err) {
                 console.error('[CreatePosition] Encryption failed:', err);
+                setEncryptionError(`Encryption failed: ${(err as Error).message}`);
+                setEncryptedAmountA(null);
             } finally {
                 setIsEncrypting(false);
             }
@@ -285,6 +289,8 @@ export const CreatePositionPanel: FC<CreatePositionPanelProps> = ({
                     setEncryptedAmountB(encryptedB);
                 } catch (err) {
                     console.error('[CreatePosition] Amount B encryption failed:', err);
+                    setEncryptionError(`Amount B Encryption failed: ${(err as Error).message}`);
+                    setEncryptedAmountB(null);
                 }
             }
         } else if (!value) {
@@ -302,6 +308,8 @@ export const CreatePositionPanel: FC<CreatePositionPanelProps> = ({
                 setEncryptedAmountB(encrypted);
             } catch (err) {
                 console.error('[CreatePosition] Encryption failed:', err);
+                setEncryptionError(`Encryption failed: ${(err as Error).message}`);
+                setEncryptedAmountB(null);
             } finally {
                 setIsEncrypting(false);
             }
@@ -317,6 +325,8 @@ export const CreatePositionPanel: FC<CreatePositionPanelProps> = ({
                     setEncryptedAmountA(encryptedA);
                 } catch (err) {
                     console.error('[CreatePosition] Amount A encryption failed:', err);
+                    setEncryptionError(`Amount A Encryption failed: ${(err as Error).message}`);
+                    setEncryptedAmountA(null);
                 }
             }
         } else if (!value) {
@@ -324,6 +334,8 @@ export const CreatePositionPanel: FC<CreatePositionPanelProps> = ({
             setEncryptedAmountA(null);
         }
     }, [ratioA, ratioB, exchangeRate]);
+
+
 
     const isInRange = currentPrice >= parseFloat(minPrice || '0') && currentPrice <= parseFloat(maxPrice || '0');
 
@@ -334,6 +346,24 @@ export const CreatePositionPanel: FC<CreatePositionPanelProps> = ({
         }
         if (!amountA || !minPrice || !maxPrice) {
             setErrorMessage("Please enter all required fields.");
+            return;
+        }
+
+        // Ensure encryption is complete
+        if (isEncrypting) {
+            setErrorMessage("Please wait for encryption to complete...");
+            return;
+        }
+
+        // Validate encrypted payloads are ready
+        if (parseFloat(amountA) > 0 && !encryptedAmountA) {
+            setTxStatus('error');
+            setErrorMessage(encryptionError || "Encryption failed or pending for Token A. Please try updating the amount.");
+            return;
+        }
+        if (amountB && parseFloat(amountB) > 0 && !encryptedAmountB) {
+            setTxStatus('error');
+            setErrorMessage(encryptionError || "Encryption failed or pending for Token B. Please try updating the amount.");
             return;
         }
 

@@ -1,13 +1,24 @@
 [workspace]
 members = [
-    "programs/*"
+    "programs/inco-vault"
 ]
+resolver = "2"
 exclude = [
     "rust-sdk",
     "ts-sdk",
     "docs",
-    "examples"
+    "examples",
+    "programs/whirlpool"
 ]
 
+
+
+
+
 [profile.release]
-overflow-checks = false
+overflow-checks = true
+
+[patch.crates-io]
+blake3 = { path = "./deps/BLAKE3" }
+base64ct = { path = "./deps/formats/base64ct" }
+

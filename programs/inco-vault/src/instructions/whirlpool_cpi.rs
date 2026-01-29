@@ -91,7 +91,7 @@ pub fn cpi_open_position<'info>(
             whirlpool_program,
         ],
         signer_seeds,
-    ).map_err(|e| error!(ErrorCode::CpiError))?;
+    ).map_err(|_e| error!(ErrorCode::CpiError))?;
 
     Ok(())
 }
@@ -159,7 +159,7 @@ pub fn cpi_increase_liquidity<'info>(
             whirlpool_program,
         ],
         signer_seeds,
-    ).map_err(|e| error!(ErrorCode::CpiError))?;
+    ).map_err(|_e| error!(ErrorCode::CpiError))?;
 
     Ok(())
 }
@@ -226,7 +226,7 @@ pub fn cpi_decrease_liquidity<'info>(
             whirlpool_program,
         ],
         signer_seeds,
-    ).map_err(|e| error!(ErrorCode::CpiError))?;
+    ).map_err(|_e| error!(ErrorCode::CpiError))?;
 
     Ok(())
 }
@@ -281,7 +281,7 @@ pub fn cpi_collect_fees<'info>(
             whirlpool_program,
         ],
         signer_seeds,
-    ).map_err(|e| error!(ErrorCode::CpiError))?;
+    ).map_err(|_e| error!(ErrorCode::CpiError))?;
 
     Ok(())
 }
@@ -332,7 +332,7 @@ pub fn cpi_collect_reward<'info>(
             whirlpool_program,
         ],
         signer_seeds,
-    ).map_err(|e| error!(ErrorCode::CpiError))?;
+    ).map_err(|_e| error!(ErrorCode::CpiError))?;
 
     Ok(())
 }
@@ -378,7 +378,7 @@ pub fn cpi_close_position<'info>(
             whirlpool_program,
         ],
         signer_seeds,
-    ).map_err(|e| error!(ErrorCode::CpiError))?;
+    ).map_err(|_e| error!(ErrorCode::CpiError))?;
 
     Ok(())
 }

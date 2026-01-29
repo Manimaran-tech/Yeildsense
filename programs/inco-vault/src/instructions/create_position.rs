@@ -13,13 +13,21 @@ use anchor_spl::associated_token::AssociatedToken;
 use crate::state::{PositionTracker, VaultPDA, VaultConfig};
 use super::whirlpool_cpi::{self, OpenPositionBumps};
 
-use anchor_lang::solana_program::pubkey;
+// Pubkey is imported from anchor_lang::prelude::*;
 
 // Inco Lightning program ID
-pub const INCO_LIGHTNING_ID: Pubkey = pubkey!("5sjEbPiqgZrYwR31ahR6Uk9wf5awoX61YGg7jExQSwaj");
+// 5sjEbPiqgZrYwR31ahR6Uk9wf5awoX61YGg7jExQSwaj
+pub const INCO_LIGHTNING_ID: Pubkey = Pubkey::new_from_array([
+    72, 109, 138, 238, 163, 139, 180, 197, 134, 126,  79,  99, 196,  95,  65, 212,
+    87,  50,  11, 181, 166,  87, 194, 215, 222, 102,  28, 190, 163, 126, 167,  52
+]);
 
 // Whirlpool program ID
-pub const WHIRLPOOL_PROGRAM_ID: Pubkey = pubkey!("whirLbMiicVdio4qvUfM5KAg6Ct8VwpYzGff3uctyCc");
+// whirLbMiicVdio4qvUfM5KAg6Ct8VwpYzGff3uctyCc
+pub const WHIRLPOOL_PROGRAM_ID: Pubkey = Pubkey::new_from_array([
+    14,   3, 104,  95, 142, 144, 144,  83, 228,  88,  18,  28, 102, 245, 167, 106,
+   237, 199, 112, 106, 161,  28, 130, 248, 170, 149,  42, 143,  43, 120, 121, 169
+]);
 
 /// Create a new position with liquidity
 pub fn handler(
@@ -169,7 +177,7 @@ pub struct CreatePositionWithLiquidity<'info> {
     
     // Global config (for pause check)
     #[account(seeds = [b"config"], bump = vault_config.bump)]
-    pub vault_config: Account<'info, VaultConfig>,
+    pub vault_config: Box<Account<'info, VaultConfig>>,
     
     // User's vault PDA
     #[account(
@@ -178,7 +186,7 @@ pub struct CreatePositionWithLiquidity<'info> {
         bump = vault_pda.bump,
         constraint = vault_pda.owner == authority.key() @ CreatePositionError::InvalidOwner
     )]
-    pub vault_pda: Account<'info, VaultPDA>,
+    pub vault_pda: Box<Account<'info, VaultPDA>>,
     
     // Position tracker (new)
     #[account(
@@ -188,7 +196,7 @@ pub struct CreatePositionWithLiquidity<'info> {
         seeds = [b"tracker", authority.key().as_ref(), whirlpool.key().as_ref()],
         bump
     )]
-    pub position_tracker: Account<'info, PositionTracker>,
+    pub position_tracker: Box<Account<'info, PositionTracker>>,
     
     // Whirlpool accounts
     /// CHECK: Whirlpool account (validated by CPI)
@@ -200,24 +208,24 @@ pub struct CreatePositionWithLiquidity<'info> {
     
     // LP NFT mint
     #[account(mut)]
-    pub position_mint: Account<'info, Mint>,
+    pub position_mint: Box<Account<'info, Mint>>,
     
     // LP NFT token account (owned by vault PDA)
     #[account(mut)]
-    pub position_token_account: Account<'info, TokenAccount>,
+    pub position_token_account: Box<Account<'info, TokenAccount>>,
     
     // User token accounts for deposit
     #[account(
         mut,
         constraint = token_account_a.owner == authority.key() @ CreatePositionError::InvalidOwner
     )]
-    pub token_account_a: Account<'info, TokenAccount>,
+    pub token_account_a: Box<Account<'info, TokenAccount>>,
     
     #[account(
         mut,
         constraint = token_account_b.owner == authority.key() @ CreatePositionError::InvalidOwner
     )]
-    pub token_account_b: Account<'info, TokenAccount>,
+    pub token_account_b: Box<Account<'info, TokenAccount>>,
     
     // Whirlpool token vaults
     /// CHECK: Pool vault A (validated by CPI)

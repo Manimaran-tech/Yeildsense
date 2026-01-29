@@ -13,7 +13,7 @@ use anchor_spl::token::{Token, TokenAccount, Mint};
 use anchor_spl::associated_token::AssociatedToken;
 
 use crate::state::{PositionTracker, VaultPDA, VaultConfig};
-use super::create_position::{INCO_LIGHTNING_ID, WHIRLPOOL_PROGRAM_ID};
+use super::create_position::WHIRLPOOL_PROGRAM_ID;
 
 /// Rebalance position to new tick range
 pub fn handler(
@@ -31,7 +31,7 @@ pub fn handler(
         ctx.accounts.position_tracker.user.as_ref(),
         &[ctx.accounts.vault_pda.bump],
     ];
-    let signer_seeds = &[&vault_seeds[..]];
+    let _signer_seeds = &[&vault_seeds[..]];
 
     let slippage = max_slippage_bps.unwrap_or(ctx.accounts.vault_config.default_max_slippage_bps);
 
@@ -128,12 +128,12 @@ pub fn handler(
     let new_liquidity: u128 = 0; // Would be calculated
     
     // Apply slippage
-    let max_a = balance_a
+    let _max_a = balance_a
         .checked_mul(10000 + slippage as u64)
         .ok_or(RebalanceError::Overflow)?
         .checked_div(10000)
         .ok_or(RebalanceError::Overflow)?;
-    let max_b = balance_b
+    let _max_b = balance_b
         .checked_mul(10000 + slippage as u64)
         .ok_or(RebalanceError::Overflow)?
         .checked_div(10000)

@@ -1,13 +1,13 @@
-# Anchor configuration for Whirlpool program
-# Note: Tests now use LiteSVM instead of Anchor's test validator.
-# External programs and preloaded accounts are configured in litesvm.ts.
+[toolchain]
+anchor_version = "0.31.0"
+
+[features]
+resolution = true
+skip-lint = false
 
 [programs.localnet]
-whirlpool = "whirLbMiicVdio4qvUfM5KAg6Ct8VwpYzGff3uctyCc"
-inco_vault = "incoBncSVFXQx8LWWND6rrZMsNpYzXJ8jSKSfLHFSE3"
-
-[toolchain]
-anchor_version = "0.32.1"
+inco_vault = "HrPBHxpacccsPyjYb3oADADQdG48Sf1j3tVHTDUhV69A"
+whirlpool = "4Qsg3uj6dmouegHhe9tquz8BxSBG6nktE6m9xbDVSHe5"
 
 [registry]
 url = "https://anchor.projectserum.com"

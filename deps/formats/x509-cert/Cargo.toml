@@ -1,0 +1,35 @@
+[package]
+name = "x509-cert"
+version = "0.2.0-pre"
+description = """
+Pure Rust implementation of the X.509 Public Key Infrastructure Certificate
+format as described in RFC 5280
+"""
+authors = ["RustCrypto Developers"]
+license = "Apache-2.0 OR MIT"
+repository = "https://github.com/RustCrypto/formats/tree/master/x509-cert"
+categories = ["cryptography", "data-structures", "encoding", "no-std"]
+keywords = ["crypto"]
+readme = "README.md"
+edition = "2021"
+rust-version = "1.65"
+
+[dependencies]
+arbitrary = { version = "1.2.3", features = ["derive"], optional = true }
+const-oid = { version = "=0.10.0-pre", features = ["db"], path = "../const-oid" }
+der = { version = "=0.7.0-pre", features = ["derive", "alloc", "flagset"], path = "../der" }
+flagset = { version = "0.4.3" }
+spki = { version = "=0.7.0-pre", path = "../spki", features = ["alloc"] }
+
+[dev-dependencies]
+hex-literal = "0.3"
+rstest = "0.16"
+
+[features]
+arbitrary = ["std", "dep:arbitrary", "const-oid/arbitrary", "der/arbitrary", "spki/arbitrary"]
+pem = ["der/pem"]
+std = ["der/std", "spki/std", "const-oid/std"]
+
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]

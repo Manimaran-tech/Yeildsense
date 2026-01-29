@@ -7,10 +7,14 @@
 //! 4. Signature verification is done by Solana runtime (Ed25519 precompile)
 
 use anchor_lang::prelude::*;
-use anchor_lang::solana_program::pubkey;
+// Pubkey is imported from anchor_lang::prelude::*;
 
 /// Ed25519 program ID (native precompile for signature verification)
-pub const ED25519_PROGRAM_ID: Pubkey = pubkey!("Ed25519SigVerify111111111111111111111111111");
+// Ed25519SigVerify111111111111111111111111111
+pub const ED25519_PROGRAM_ID: Pubkey = Pubkey::new_from_array([
+    3, 125,  70, 214, 124, 147, 251, 190, 18, 249,  66, 143, 131, 141,  64, 255,
+    5, 112, 116,  73,  39, 244, 138, 100, 252, 202, 112,  68, 128,   0,   0,   0
+]);
 
 /// Inco covalidator public key (from Inco devnet/mainnet config)
 /// IMPORTANT: Update this with actual Inco covalidator pubkey for deployment
@@ -75,7 +79,7 @@ pub fn handler(
     require!(num_signatures == 1, VerifyError::InvalidSignatureCount);
 
     // Parse offsets (little-endian u16)
-    let signature_offset = u16::from_le_bytes([data[2], data[3]]) as usize;
+    let _signature_offset = u16::from_le_bytes([data[2], data[3]]) as usize;
     let pubkey_offset = u16::from_le_bytes([data[6], data[7]]) as usize;
     let message_offset = u16::from_le_bytes([data[10], data[11]]) as usize;
     let message_size = u16::from_le_bytes([data[12], data[13]]) as usize;

@@ -10,7 +10,7 @@ use anchor_lang::prelude::*;
 use anchor_spl::token::{Token, TokenAccount, Mint};
 
 use crate::state::{PositionTracker, VaultPDA, VaultConfig};
-use super::create_position::{INCO_LIGHTNING_ID, WHIRLPOOL_PROGRAM_ID};
+use super::create_position::WHIRLPOOL_PROGRAM_ID;
 use super::whirlpool_cpi;
 
 /// Withdraw liquidity from position

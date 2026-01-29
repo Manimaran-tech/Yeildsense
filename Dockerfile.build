@@ -1,0 +1,55 @@
+FROM solanalabs/solana:stable
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    pkg-config \
+    libssl-dev \
+    libudev-dev \
+    git \
+    curl \
+    clang \
+    cmake
+
+# Install rustup
+RUN curl https://sh.rustup.rs -sSf | sh -s -- -y
+
+# Force rustup paths and PRIORITY (CRITICAL: rustup bin must be first in PATH)
+ENV CARGO_HOME=/root/.cargo
+ENV RUSTUP_HOME=/root/.rustup
+ENV PATH="/root/.cargo/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+
+# Force Anchor to use rustup toolchain (bypassing Solana's pinned Cargo)
+ENV ANCHOR_RUST_TOOLCHAIN=stable
+
+# Upgrade Rust to latest stable
+RUN rustup install stable
+RUN rustup default stable
+RUN rustup update stable
+
+# Verify (this should show /root/.cargo/bin/cargo)
+RUN which cargo && cargo --version
+
+# Install Anchor CLI (matching Cargo.toml version)
+RUN cargo install --git https://github.com/coral-xyz/anchor --tag v0.30.1 anchor-cli
+
+# Set working directory
+WORKDIR /app
+
+# Copy ONLY the specific files we need (Allowlist strategy)
+# This guarantees Cargo.lock and other garbage is NOT copied
+COPY Cargo.toml .
+COPY Anchor.toml .
+COPY programs/inco-vault ./programs/inco-vault
+
+# Explicitly create a new lockfile compatible with this environment
+RUN cargo generate-lockfile
+
+# Reset entrypoint
+ENTRYPOINT []
+
+# Verify versions for debugging
+RUN rustc --version && cargo --version
+
+# Default command
+CMD ["anchor", "build"]

@@ -5,7 +5,7 @@
 
 use anchor_lang::prelude::*;
 use anchor_lang::solana_program::instruction::{AccountMeta, Instruction};
-use anchor_lang::solana_program::program::{invoke, invoke_signed};
+use anchor_lang::solana_program::program::invoke;
 
 use super::create_position::INCO_LIGHTNING_ID;
 

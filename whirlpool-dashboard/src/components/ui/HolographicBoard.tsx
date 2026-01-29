@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Lock, ShieldCheck, Activity, TrendingUp } from "lucide-react";
+import { ShieldCheck, TrendingUp } from "lucide-react";
 import { useEffect, useState } from "react";
 
 export const HolographicBoard = () => {

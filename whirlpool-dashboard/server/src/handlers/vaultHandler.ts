@@ -31,19 +31,21 @@ const INCO_LIGHTNING_ID = new PublicKey("5sjEbPiqgZrYwR31ahR6Uk9wf5awoX61YGg7jEx
 const VAULT_IDL: any = {
     "version": "0.1.0",
     "name": "inco_vault",
+    "address": "incoBncSVFXQx8LWWND6rrZMsNpYzXJ8jSKSfLHFSE3",
     "metadata": {
         "address": "incoBncSVFXQx8LWWND6rrZMsNpYzXJ8jSKSfLHFSE3"
     },
     "instructions": [
         {
-            "name": "createPosition",
+            "name": "createPositionWithLiquidity",
             "accounts": [
                 { "name": "authority", "isMut": true, "isSigner": true },
                 { "name": "vaultConfig", "isMut": false, "isSigner": false },
                 { "name": "vaultPda", "isMut": true, "isSigner": false },
                 { "name": "positionTracker", "isMut": true, "isSigner": false },
-                { "name": "positionMint", "isMut": true, "isSigner": true },
-                { "name": "whirlpool", "isMut": true, "isSigner": false },
+                { "name": "whirlpool", "isMut": false, "isSigner": false },
+                { "name": "whirlpoolPosition", "isMut": true, "isSigner": false },
+                { "name": "positionMint", "isMut": true, "isSigner": false },
                 { "name": "positionTokenAccount", "isMut": true, "isSigner": false },
                 { "name": "tokenAccountA", "isMut": true, "isSigner": false },
                 { "name": "tokenAccountB", "isMut": true, "isSigner": false },
@@ -151,7 +153,7 @@ export async function createVaultPosition(req: Request, res: Response) {
         // Setup Provider & Client
         const dummyWallet = new Wallet(Keypair.generate());
         const provider = new AnchorProvider(connection, dummyWallet, { commitment: "confirmed" });
-        const program = new Program(VAULT_IDL, provider);
+        const program = new Program(VAULT_IDL as Idl, provider);
 
         const ctx = WhirlpoolContext.from(connection, dummyWallet);
         const client = buildWhirlpoolClient(ctx);
@@ -272,24 +274,68 @@ export async function createVaultPosition(req: Request, res: Response) {
         const tickArrayLowerPda = PDAUtil.getTickArray(ORCA_WHIRLPOOL_PROGRAM_ID, whirlpoolPubkey, startTickLower);
         const tickArrayUpperPda = PDAUtil.getTickArray(ORCA_WHIRLPOOL_PROGRAM_ID, whirlpoolPubkey, startTickUpper);
 
-        const tx = await program.methods.createPosition(
+        console.log("CreatePosition Args:", {
+            encryptedAmountA: encryptedAmountA.length,
+            encryptedAmountB: encryptedAmountB.length,
+            amountType,
+            tickLower,
+            tickUpper,
+            liquidityAmount: liquidityAmount.toString(),
+            tokenMaxA: tokenMaxA.toString(),
+            tokenMaxB: tokenMaxB.toString(),
+            slippageBps
+        });
+
+        console.log("CreatePosition Accounts:", {
+            authority: walletPubkey.toBase58(),
+            vaultConfig: vaultConfig.toBase58(),
+            vaultPda: vaultPda.toBase58(),
+            positionTracker: positionTracker.toBase58(),
+            positionMint: positionMint.publicKey.toBase58(),
+            whirlpool: whirlpoolPubkey.toBase58(),
+            positionTokenAccount: positionTokenAccount.toBase58(),
+            tokenAccountA: tokenAccountA.toBase58(),
+            tokenAccountB: tokenAccountB.toBase58(),
+            tokenVaultA: tokenVaultA.toBase58(),
+            tokenVaultB: tokenVaultB.toBase58(),
+            tickArrayLower: tickArrayLowerPda.publicKey.toBase58(),
+            tickArrayUpper: tickArrayUpperPda.publicKey.toBase58(),
+            incoLightningProgram: INCO_LIGHTNING_ID.toBase58(),
+            whirlpoolProgram: WHIRLPOOL_PROGRAM_ID.toBase58(),
+            tokenProgram: TOKEN_PROGRAM_ID.toBase58(),
+            associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID.toBase58(),
+            systemProgram: SystemProgram.programId.toBase58(),
+            rent: SYSVAR_RENT_PUBKEY.toBase58()
+        });
+
+        // Guard against potentially undefined SYSVAR_RENT_PUBKEY
+        const RENT_PUBKEY = SYSVAR_RENT_PUBKEY || new PublicKey("SysvarRent111111111111111111111111111111111");
+
+        // Derive whirlpoolPosition PDA (Whirlpool program derives position from position mint)
+        const [whirlpoolPosition] = PublicKey.findProgramAddressSync(
+            [Buffer.from("position"), positionMint.publicKey.toBuffer()],
+            WHIRLPOOL_PROGRAM_ID
+        );
+
+        const tx = await program.methods.createPositionWithLiquidity(
             Buffer.from(encryptedAmountA, 'base64'),
             Buffer.from(encryptedAmountB, 'base64'),
             amountType || 0,
-            tickLower,
-            tickUpper,
+            Number(tickLower),
+            Number(tickUpper),
             new BN(liquidityAmount.toString()),
             new BN(tokenMaxA.toString()),
             new BN(tokenMaxB.toString()),
-            slippageBps ? slippageBps : null // u16 option
+            slippageBps !== undefined ? slippageBps : null // u16 option
         )
             .accounts({
                 authority: walletPubkey,
                 vaultConfig,
                 vaultPda,
                 positionTracker,
-                positionMint: positionMint.publicKey,
                 whirlpool: whirlpoolPubkey,
+                whirlpoolPosition,
+                positionMint: positionMint.publicKey,
                 positionTokenAccount,
                 tokenAccountA,
                 tokenAccountB,
@@ -302,7 +348,7 @@ export async function createVaultPosition(req: Request, res: Response) {
                 tokenProgram: TOKEN_PROGRAM_ID,
                 associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
                 systemProgram: SystemProgram.programId,
-                rent: SYSVAR_RENT_PUBKEY
+                rent: RENT_PUBKEY
             })
             .signers([positionMint])
             .transaction();
@@ -349,7 +395,7 @@ export async function withdrawVaultPosition(req: Request, res: Response) {
         // Provider setup
         const dummyWallet = new Wallet(Keypair.generate());
         const provider = new AnchorProvider(connection, dummyWallet, { commitment: "confirmed" });
-        const program = new Program(VAULT_IDL, provider);
+        const program = new Program(VAULT_IDL as Idl, provider);
 
         const ctx = WhirlpoolContext.from(connection, dummyWallet);
         const client = buildWhirlpoolClient(ctx);
@@ -485,7 +531,7 @@ export async function collectVaultProfits(req: Request, res: Response) {
 
         const dummyWallet = new Wallet(Keypair.generate());
         const provider = new AnchorProvider(connection, dummyWallet, { commitment: "confirmed" });
-        const program = new Program(VAULT_IDL, provider);
+        const program = new Program(VAULT_IDL as Idl, provider);
 
         const [vaultPda] = PublicKey.findProgramAddressSync([Buffer.from("vault")], INCO_VAULT_PROGRAM_ID);
         const [vaultConfig] = PublicKey.findProgramAddressSync([Buffer.from("config")], INCO_VAULT_PROGRAM_ID);

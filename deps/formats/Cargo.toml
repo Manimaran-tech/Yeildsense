@@ -1,0 +1,30 @@
+[workspace]
+resolver = "2"
+members = [
+    "base16ct",
+    "base32ct",
+    "base64ct",
+    "cmpv2",
+    "cms",
+    "const-oid",
+    "crmf",
+    "der",
+    "der/derive",
+    "pem-rfc7468",
+    "pkcs1",
+    "pkcs5",
+    "pkcs7",
+    "pkcs8",
+    "pkcs12",
+    "sec1",
+    "serdect",
+    "spki",
+    "tai64",
+    "tls_codec",
+    "tls_codec/derive",
+    "x509-cert",
+    "x509-ocsp"
+]
+
+[profile.dev]
+opt-level = 2

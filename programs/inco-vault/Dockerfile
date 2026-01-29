@@ -1,5 +1,4 @@
-# Use a base image with compatible Rust version
-FROM rust:1.75-bullseye
+FROM solanalabs/solana:stable
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
@@ -7,21 +6,26 @@ RUN apt-get update && apt-get install -y \
     pkg-config \
     libssl-dev \
     libudev-dev \
+    git \
+    curl \
     clang \
     cmake
 
-# Install Solana CLI
-RUN sh -c "$(curl -sSfL https://release.solana.com/v1.18.18/install)"
-ENV PATH="/root/.local/share/solana/install/active_release/bin:$PATH"
+# Install Rust (latest stable for 2026 compatibility)
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain stable
+ENV PATH="/root/.cargo/bin:$PATH"
 
-# Install Anchor CLI
-RUN cargo install --git https://github.com/coral-xyz/anchor --tag v0.29.0 anchor-cli --locked
+# Install Anchor CLI (matching Cargo.toml version)
+RUN cargo install --git https://github.com/coral-xyz/anchor --tag v0.30.1 anchor-cli
 
 # Set working directory
 WORKDIR /app
 
 # Copy project files
 COPY . .
+
+# Reset entrypoint to avoid running the validator by default
+ENTRYPOINT []
 
 # Build command (default)
 CMD ["anchor", "build"]

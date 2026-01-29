@@ -114,6 +114,10 @@ export async function getSOLPrice(): Promise<number> {
 export async function getTokenPrice(symbol: string): Promise<number> {
     if (!symbol) return 0;
 
+    // Hardcode Stablecoins
+    const s = symbol.toUpperCase();
+    if (['USDC', 'USDT', 'USD'].includes(s)) return 1.0;
+
     // Use specialized SOL fetcher if applicable
     if (symbol === 'SOL' || symbol === 'So11111111111111111111111111111111111111112') {
         const solPrice = await getSOLPrice();

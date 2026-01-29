@@ -66,7 +66,7 @@ pub fn handler(ctx: Context<CollectAllProfits>) -> Result<()> {
     
     // Reward 1
     if let Some(reward_account) = &ctx.accounts.reward_account_1 {
-        let pre_reward = reward_account.amount;
+        let _pre_reward = reward_account.amount;
         // CPI similar to above...
         rewards[1] = 0; // Would be from CPI
         msg!("Reward 1 collected: {}", rewards[1]);
@@ -74,7 +74,7 @@ pub fn handler(ctx: Context<CollectAllProfits>) -> Result<()> {
     
     // Reward 2
     if let Some(reward_account) = &ctx.accounts.reward_account_2 {
-        let pre_reward = reward_account.amount;
+        let _pre_reward = reward_account.amount;
         // CPI similar to above...
         rewards[2] = 0; // Would be from CPI
         msg!("Reward 2 collected: {}", rewards[2]);

@@ -1,0 +1,53 @@
+# Git
+.git
+.gitignore
+
+# Rust / Solana
+target
+**/target
+*.so
+*.a
+Cargo.lock
+
+# Node
+node_modules
+npm-debug.log
+yarn-error.log
+
+# Env & secrets
+.env
+.env.*
+
+# OS junk
+.DS_Store
+Thumbs.db
+
+# Python (if any)
+__pycache__
+*.pyc
+.venv
+
+# Logs & temp
+logs
+*.log
+tmp
+.cache
+
+# Heavy Project Folders (We ONLY need 'programs' for this build)
+whirlpool-dashboard
+legacy-sdk
+ts-sdk
+rust-sdk
+docs
+examples
+monitoring
+processed
+tests
+node_modules
+**/node_modules
+
+# Artifacts
+inco_target
+
+# Ignore other programs to prevent workspace conflicts
+programs/whirlpool
